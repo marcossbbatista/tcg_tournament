@@ -11,7 +11,10 @@ import '../../partida/pages/montar_primeira_rodada_page.dart';
 import '../../partida/pages/gerenciar_rodada_page.dart';
 import '../../partida/services/rodada_service.dart';
 
-class GerenciarTorneioPage extends StatelessWidget {
+import 'classificacao_page.dart';
+
+class GerenciarTorneioPage
+    extends StatelessWidget {
   final TorneioModel torneio;
 
   const GerenciarTorneioPage({
@@ -23,10 +26,20 @@ class GerenciarTorneioPage extends StatelessWidget {
     DateTime data,
   ) {
     final dia =
-        data.day.toString().padLeft(2, '0');
+        data.day
+            .toString()
+            .padLeft(
+              2,
+              '0',
+            );
 
     final mes =
-        data.month.toString().padLeft(2, '0');
+        data.month
+            .toString()
+            .padLeft(
+              2,
+              '0',
+            );
 
     final ano =
         data.year.toString();
@@ -38,10 +51,20 @@ class GerenciarTorneioPage extends StatelessWidget {
     DateTime data,
   ) {
     final hora =
-        data.hour.toString().padLeft(2, '0');
+        data.hour
+            .toString()
+            .padLeft(
+              2,
+              '0',
+            );
 
     final minuto =
-        data.minute.toString().padLeft(2, '0');
+        data.minute
+            .toString()
+            .padLeft(
+              2,
+              '0',
+            );
 
     return '$hora:$minuto';
   }
@@ -76,15 +99,32 @@ class GerenciarTorneioPage extends StatelessWidget {
             torneioAtual.id,
       );
 
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        return;
+      }
 
       if (resultado ==
           'jogadores_insuficientes') {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(
           const SnackBar(
             content: Text(
               'São necessários pelo menos 2 jogadores aprovados.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      if (resultado != 'ok') {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Não foi possível iniciar o torneio.',
             ),
           ),
         );
@@ -105,10 +145,13 @@ class GerenciarTorneioPage extends StatelessWidget {
         ),
       );
     } catch (e) {
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        return;
+      }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
         const SnackBar(
           content: Text(
             'Não foi possível iniciar o torneio.',
@@ -118,24 +161,50 @@ class GerenciarTorneioPage extends StatelessWidget {
     }
   }
 
+  void _abrirClassificacao(
+    BuildContext context,
+    TorneioModel torneioAtual, {
+    bool classificacaoFinal = false,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            ClassificacaoPage(
+          torneioId:
+              torneioAtual.id,
+          nomeTorneio:
+              torneioAtual.nome,
+          classificacaoFinal:
+              classificacaoFinal,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(
     BuildContext context,
   ) {
-    final TorneioService torneioService =
+    final TorneioService
+        torneioService =
         TorneioService();
 
-    return StreamBuilder<TorneioModel?>(
+    return StreamBuilder<
+        TorneioModel?>(
       stream:
-          torneioService.observarTorneio(
+          torneioService
+              .observarTorneio(
         torneio.id,
       ),
       builder: (
         context,
         snapshot,
       ) {
-        if (snapshot.connectionState ==
-                ConnectionState.waiting &&
+        if (snapshot
+                    .connectionState ==
+                ConnectionState
+                    .waiting &&
             !snapshot.hasData) {
           return const Scaffold(
             body: Center(
@@ -156,7 +225,8 @@ class GerenciarTorneioPage extends StatelessWidget {
         }
 
         final torneioAtual =
-            snapshot.data ?? torneio;
+            snapshot.data ??
+                torneio;
 
         return _buildPagina(
           context,
@@ -170,7 +240,8 @@ class GerenciarTorneioPage extends StatelessWidget {
     BuildContext context,
     TorneioModel torneioAtual,
   ) {
-    final JogadorTorneioService jogadorService =
+    final JogadorTorneioService
+        jogadorService =
         JogadorTorneioService();
 
     return Scaffold(
@@ -179,25 +250,35 @@ class GerenciarTorneioPage extends StatelessWidget {
           torneioAtual.nome,
         ),
       ),
-      body: SingleChildScrollView(
+      body:
+          SingleChildScrollView(
         padding:
-            const EdgeInsets.all(16),
+            const EdgeInsets.all(
+          16,
+        ),
         child: Column(
           crossAxisAlignment:
-              CrossAxisAlignment.stretch,
+              CrossAxisAlignment
+                  .stretch,
           children: [
             Card(
               child: Padding(
                 padding:
-                    const EdgeInsets.all(16),
+                    const EdgeInsets
+                        .all(
+                  16,
+                ),
                 child: Column(
                   crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      CrossAxisAlignment
+                          .start,
                   children: [
                     Text(
                       torneioAtual.nome,
                       style:
-                          Theme.of(context)
+                          Theme.of(
+                            context,
+                          )
                               .textTheme
                               .headlineSmall,
                     ),
@@ -212,7 +293,8 @@ class GerenciarTorneioPage extends StatelessWidget {
                       titulo:
                           'Código',
                       valor:
-                          torneioAtual.codigo,
+                          torneioAtual
+                              .codigo,
                     ),
 
                     const SizedBox(
@@ -221,12 +303,14 @@ class GerenciarTorneioPage extends StatelessWidget {
 
                     _InfoLinha(
                       icone:
-                          Icons.calendar_month,
+                          Icons
+                              .calendar_month,
                       titulo:
                           'Data',
                       valor:
                           _formatarData(
-                        torneioAtual.dataHora,
+                        torneioAtual
+                            .dataHora,
                       ),
                     ),
 
@@ -236,12 +320,14 @@ class GerenciarTorneioPage extends StatelessWidget {
 
                     _InfoLinha(
                       icone:
-                          Icons.access_time,
+                          Icons
+                              .access_time,
                       titulo:
                           'Horário',
                       valor:
                           _formatarHorario(
-                        torneioAtual.dataHora,
+                        torneioAtual
+                            .dataHora,
                       ),
                     ),
 
@@ -251,11 +337,13 @@ class GerenciarTorneioPage extends StatelessWidget {
 
                     _InfoLinha(
                       icone:
-                          Icons.sports_esports,
+                          Icons
+                              .sports_esports,
                       titulo:
                           'Formato',
                       valor:
-                          torneioAtual.formato
+                          torneioAtual
+                              .formato
                               .toUpperCase(),
                     ),
 
@@ -291,12 +379,14 @@ class GerenciarTorneioPage extends StatelessWidget {
 
                     _InfoLinha(
                       icone:
-                          Icons.info_outline,
+                          Icons
+                              .info_outline,
                       titulo:
                           'Status',
                       valor:
                           _formatarStatus(
-                        torneioAtual.status,
+                        torneioAtual
+                            .status,
                       ),
                     ),
                   ],
@@ -321,21 +411,28 @@ class GerenciarTorneioPage extends StatelessWidget {
             ),
 
             StreamBuilder<
-                List<JogadorTorneioModel>>(
+                List<
+                    JogadorTorneioModel>>(
               stream:
-                  jogadorService.listarJogadores(
+                  jogadorService
+                      .listarJogadores(
                 torneioAtual.id,
               ),
               builder: (
                 context,
                 snapshot,
               ) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
+                if (snapshot
+                        .connectionState ==
+                    ConnectionState
+                        .waiting) {
                   return const Card(
                     child: Padding(
                       padding:
-                          EdgeInsets.all(24),
+                          EdgeInsets
+                              .all(
+                        24,
+                      ),
                       child: Center(
                         child:
                             CircularProgressIndicator(),
@@ -344,11 +441,15 @@ class GerenciarTorneioPage extends StatelessWidget {
                   );
                 }
 
-                if (snapshot.hasError) {
+                if (snapshot
+                    .hasError) {
                   return const Card(
                     child: Padding(
                       padding:
-                          EdgeInsets.all(16),
+                          EdgeInsets
+                              .all(
+                        16,
+                      ),
                       child: Text(
                         'Não foi possível carregar os participantes.',
                       ),
@@ -357,13 +458,17 @@ class GerenciarTorneioPage extends StatelessWidget {
                 }
 
                 final jogadores =
-                    snapshot.data ?? [];
+                    snapshot.data ??
+                        [];
 
                 final aprovados =
                     jogadores
                         .where(
-                          (jogador) =>
-                              jogador.status ==
+                          (
+                            jogador,
+                          ) =>
+                              jogador
+                                  .status ==
                               'aprovado',
                         )
                         .length;
@@ -371,8 +476,11 @@ class GerenciarTorneioPage extends StatelessWidget {
                 final pendentes =
                     jogadores
                         .where(
-                          (jogador) =>
-                              jogador.status ==
+                          (
+                            jogador,
+                          ) =>
+                              jogador
+                                  .status ==
                               'pendente',
                         )
                         .length;
@@ -380,7 +488,8 @@ class GerenciarTorneioPage extends StatelessWidget {
                 return Card(
                   child: Padding(
                     padding:
-                        const EdgeInsets.all(
+                        const EdgeInsets
+                            .all(
                       16,
                     ),
                     child: Column(
@@ -398,7 +507,8 @@ class GerenciarTorneioPage extends StatelessWidget {
                             ),
 
                             const SizedBox(
-                              width: 12,
+                              width:
+                                  12,
                             ),
 
                             Expanded(
@@ -414,20 +524,26 @@ class GerenciarTorneioPage extends StatelessWidget {
                         ),
 
                         const SizedBox(
-                          height: 16,
+                          height:
+                              16,
                         ),
 
                         SizedBox(
                           width:
-                              double.infinity,
+                              double
+                                  .infinity,
                           child:
-                              OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
+                              OutlinedButton
+                                  .icon(
+                            onPressed:
+                                () {
+                              Navigator
+                                  .push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      GerenciarJogadoresPage(
+                                  builder:
+                                      (_) =>
+                                          GerenciarJogadoresPage(
                                     torneioId:
                                         torneioAtual.id,
                                     nomeTorneio:
@@ -438,7 +554,8 @@ class GerenciarTorneioPage extends StatelessWidget {
                             },
                             icon:
                                 const Icon(
-                              Icons.people,
+                              Icons
+                                  .people,
                             ),
                             label:
                                 const Text(
@@ -459,51 +576,11 @@ class GerenciarTorneioPage extends StatelessWidget {
 
             if (torneioAtual.status ==
                 'inscricoes')
-              Card(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.emoji_events_outlined,
-                        size: 42,
-                      ),
-
-                      const SizedBox(
-                        height: 12,
-                      ),
-
-                      const Text(
-                        'O torneio ainda não foi iniciado.',
-                      ),
-
-                      const SizedBox(
-                        height: 16,
-                      ),
-
-                      SizedBox(
-                        width:
-                            double.infinity,
-                        child:
-                            ElevatedButton.icon(
-                          onPressed: () =>
-                              _iniciarTorneio(
-                            context,
-                            torneioAtual,
-                          ),
-                          icon:
-                              const Icon(
-                            Icons.play_arrow,
-                          ),
-                          label:
-                              const Text(
-                            'Iniciar torneio',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              _CardTorneioNaoIniciado(
+                onIniciar: () =>
+                    _iniciarTorneio(
+                  context,
+                  torneioAtual,
                 ),
               )
             else if (torneioAtual.status ==
@@ -515,44 +592,122 @@ class GerenciarTorneioPage extends StatelessWidget {
                   torneioId:
                       torneioAtual.id,
                   rodada:
-                      torneioAtual.rodadaAtual,
+                      torneioAtual
+                          .rodadaAtual,
                 ),
                 builder: (
                   context,
                   snapshot,
                 ) {
+                  if (snapshot
+                              .connectionState ==
+                          ConnectionState
+                              .waiting &&
+                      !snapshot
+                          .hasData) {
+                    return const Card(
+                      child: Padding(
+                        padding:
+                            EdgeInsets
+                                .all(
+                          24,
+                        ),
+                        child: Center(
+                          child:
+                              CircularProgressIndicator(),
+                        ),
+                      ),
+                    );
+                  }
+
                   return _CardRodadaAtual(
                     torneio:
                         torneioAtual,
                     statusRodada:
                         snapshot.data,
+                    onVerClassificacao:
+                        () =>
+                            _abrirClassificacao(
+                      context,
+                      torneioAtual,
+                    ),
                   );
                 },
               )
             else if (torneioAtual.status ==
                 'finalizado')
-              const Card(
-                child: Padding(
-                  padding:
-                      EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.emoji_events,
-                        size: 48,
-                      ),
-
-                      SizedBox(
-                        height: 12,
-                      ),
-
-                      Text(
-                        'Torneio finalizado.',
-                      ),
-                    ],
-                  ),
+              _CardTorneioFinalizado(
+                onVerClassificacao:
+                    () =>
+                        _abrirClassificacao(
+                  context,
+                  torneioAtual,
+                  classificacaoFinal:
+                      true,
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CardTorneioNaoIniciado
+    extends StatelessWidget {
+  final VoidCallback onIniciar;
+
+  const _CardTorneioNaoIniciado({
+    required this.onIniciar,
+  });
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return Card(
+      child: Padding(
+        padding:
+            const EdgeInsets.all(
+          16,
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons
+                  .emoji_events_outlined,
+              size: 42,
+            ),
+
+            const SizedBox(
+              height: 12,
+            ),
+
+            const Text(
+              'O torneio ainda não foi iniciado.',
+            ),
+
+            const SizedBox(
+              height: 16,
+            ),
+
+            SizedBox(
+              width:
+                  double.infinity,
+              child:
+                  ElevatedButton.icon(
+                onPressed:
+                    onIniciar,
+                icon:
+                    const Icon(
+                  Icons.play_arrow,
+                ),
+                label:
+                    const Text(
+                  'Iniciar torneio',
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -564,11 +719,18 @@ class _CardRodadaAtual
     extends StatelessWidget {
   final TorneioModel torneio;
   final String? statusRodada;
+  final VoidCallback
+      onVerClassificacao;
 
   const _CardRodadaAtual({
     required this.torneio,
     required this.statusRodada,
+    required this.onVerClassificacao,
   });
+
+  bool get _ultimaRodada =>
+      torneio.rodadaAtual >=
+      torneio.quantidadeRodadas;
 
   String _titulo() {
     switch (statusRodada) {
@@ -586,9 +748,62 @@ class _CardRodadaAtual
     }
   }
 
-  Future<void> _gerarProximaRodada(
+  Future<void>
+      _gerarProximaRodada(
     BuildContext context,
   ) async {
+    final confirmar =
+        await showDialog<bool>(
+      context: context,
+      builder: (
+        context,
+      ) {
+        return AlertDialog(
+          title: Text(
+            'Gerar Rodada ${torneio.rodadaAtual + 1}',
+          ),
+          content:
+              const Text(
+            'O sistema irá sugerir os próximos confrontos com base na classificação e no histórico de partidas. '
+            'Você poderá revisar e alterar os confrontos antes de iniciar a rodada.',
+          ),
+          actions: [
+            TextButton(
+              onPressed:
+                  () {
+                Navigator.pop(
+                  context,
+                  false,
+                );
+              },
+              child:
+                  const Text(
+                'Cancelar',
+              ),
+            ),
+
+            ElevatedButton(
+              onPressed:
+                  () {
+                Navigator.pop(
+                  context,
+                  true,
+                );
+              },
+              child:
+                  const Text(
+                'Gerar rodada',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true) {
+      return;
+    }
+
     try {
       final resultado =
           await RodadaService()
@@ -599,12 +814,15 @@ class _CardRodadaAtual
             torneio.rodadaAtual,
       );
 
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        return;
+      }
 
       switch (resultado) {
         case 'ok':
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
             SnackBar(
               content: Text(
                 'Rodada ${torneio.rodadaAtual + 1} gerada. Revise os confrontos antes de iniciar.',
@@ -615,8 +833,9 @@ class _CardRodadaAtual
           break;
 
         case 'ultima_rodada':
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
             const SnackBar(
               content: Text(
                 'O torneio já chegou à última rodada.',
@@ -627,8 +846,9 @@ class _CardRodadaAtual
           break;
 
         case 'rodada_ja_existe':
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
             const SnackBar(
               content: Text(
                 'A próxima rodada já existe.',
@@ -639,8 +859,9 @@ class _CardRodadaAtual
           break;
 
         case 'rodada_nao_finalizada':
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
             const SnackBar(
               content: Text(
                 'Finalize a rodada atual antes de gerar a próxima.',
@@ -650,9 +871,23 @@ class _CardRodadaAtual
 
           break;
 
+        case 'jogadores_insuficientes':
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Não existem jogadores suficientes para gerar a próxima rodada.',
+              ),
+            ),
+          );
+
+          break;
+
         default:
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
             const SnackBar(
               content: Text(
                 'Não foi possível gerar a próxima rodada.',
@@ -661,10 +896,13 @@ class _CardRodadaAtual
           );
       }
     } catch (e) {
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        return;
+      }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
         const SnackBar(
           content: Text(
             'Não foi possível gerar a próxima rodada.',
@@ -674,16 +912,165 @@ class _CardRodadaAtual
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final ultimaRodada =
-        torneio.rodadaAtual >=
-        torneio.quantidadeRodadas;
+  Future<void> _finalizarTorneio(
+    BuildContext context,
+  ) async {
+    final confirmar =
+        await showDialog<bool>(
+      context: context,
+      builder: (
+        context,
+      ) {
+        return AlertDialog(
+          title:
+              const Text(
+            'Finalizar torneio',
+          ),
+          content:
+              const Text(
+            'Todas as rodadas foram concluídas. Deseja finalizar o torneio?\n\n'
+            'Após a finalização, novas rodadas não poderão ser geradas.',
+          ),
+          actions: [
+            TextButton(
+              onPressed:
+                  () {
+                Navigator.pop(
+                  context,
+                  false,
+                );
+              },
+              child:
+                  const Text(
+                'Cancelar',
+              ),
+            ),
 
+            ElevatedButton(
+              onPressed:
+                  () {
+                Navigator.pop(
+                  context,
+                  true,
+                );
+              },
+              child:
+                  const Text(
+                'Finalizar torneio',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true) {
+      return;
+    }
+
+    try {
+      final resultado =
+          await TorneioService()
+              .finalizarTorneio(
+        torneioId:
+            torneio.id,
+      );
+
+      if (!context.mounted) {
+        return;
+      }
+
+      switch (resultado) {
+        case 'ok':
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Torneio finalizado com sucesso.',
+              ),
+            ),
+          );
+
+          break;
+
+        case 'torneio_finalizado':
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Este torneio já foi finalizado.',
+              ),
+            ),
+          );
+
+          break;
+
+        case 'rodadas_pendentes':
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Ainda existem rodadas pendentes.',
+              ),
+            ),
+          );
+
+          break;
+
+        case 'rodada_nao_finalizada':
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'A última rodada ainda não foi finalizada.',
+              ),
+            ),
+          );
+
+          break;
+
+        default:
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Não foi possível finalizar o torneio.',
+              ),
+            ),
+          );
+      }
+    } catch (e) {
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível finalizar o torneio.',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
     return Card(
       child: Padding(
         padding:
-            const EdgeInsets.all(16),
+            const EdgeInsets.all(
+          16,
+        ),
         child: Column(
           children: [
             const Icon(
@@ -714,20 +1101,24 @@ class _CardRodadaAtual
                   double.infinity,
               child:
                   OutlinedButton.icon(
-                onPressed: () {
+                onPressed:
+                    () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          GerenciarRodadaPage(
+                      builder:
+                          (_) =>
+                              GerenciarRodadaPage(
                         torneioId:
                             torneio.id,
                         nomeTorneio:
                             torneio.nome,
                         rodada:
-                            torneio.rodadaAtual,
+                            torneio
+                                .rodadaAtual,
                         formato:
-                            torneio.formato,
+                            torneio
+                                .formato,
                       ),
                     ),
                   );
@@ -746,9 +1137,31 @@ class _CardRodadaAtual
               ),
             ),
 
+            const SizedBox(
+              height: 12,
+            ),
+
+            SizedBox(
+              width:
+                  double.infinity,
+              child:
+                  OutlinedButton.icon(
+                onPressed:
+                    onVerClassificacao,
+                icon:
+                    const Icon(
+                  Icons.leaderboard,
+                ),
+                label:
+                    const Text(
+                  'Ver classificação',
+                ),
+              ),
+            ),
+
             if (statusRodada ==
                     'finalizada' &&
-                !ultimaRodada) ...[
+                !_ultimaRodada) ...[
               const SizedBox(
                 height: 12,
               ),
@@ -758,8 +1171,9 @@ class _CardRodadaAtual
                     double.infinity,
                 child:
                     ElevatedButton.icon(
-                  onPressed: () =>
-                      _gerarProximaRodada(
+                  onPressed:
+                      () =>
+                          _gerarProximaRodada(
                     context,
                   ),
                   icon:
@@ -776,7 +1190,13 @@ class _CardRodadaAtual
 
             if (statusRodada ==
                     'finalizada' &&
-                ultimaRodada) ...[
+                _ultimaRodada) ...[
+              const SizedBox(
+                height: 16,
+              ),
+
+              const Divider(),
+
               const SizedBox(
                 height: 16,
               ),
@@ -786,6 +1206,32 @@ class _CardRodadaAtual
                 textAlign:
                     TextAlign.center,
               ),
+
+              const SizedBox(
+                height: 12,
+              ),
+
+              SizedBox(
+                width:
+                    double.infinity,
+                child:
+                    ElevatedButton.icon(
+                  onPressed:
+                      () =>
+                          _finalizarTorneio(
+                    context,
+                  ),
+                  icon:
+                      const Icon(
+                    Icons
+                        .emoji_events,
+                  ),
+                  label:
+                      const Text(
+                    'Finalizar torneio',
+                  ),
+                ),
+              ),
             ],
           ],
         ),
@@ -794,7 +1240,84 @@ class _CardRodadaAtual
   }
 }
 
-class _InfoLinha extends StatelessWidget {
+class _CardTorneioFinalizado
+    extends StatelessWidget {
+  final VoidCallback
+      onVerClassificacao;
+
+  const _CardTorneioFinalizado({
+    required this.onVerClassificacao,
+  });
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return Card(
+      child: Padding(
+        padding:
+            const EdgeInsets.all(
+          24,
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.emoji_events,
+              size: 52,
+            ),
+
+            const SizedBox(
+              height: 12,
+            ),
+
+            Text(
+              'Torneio finalizado',
+              style:
+                  Theme.of(context)
+                      .textTheme
+                      .titleLarge,
+            ),
+
+            const SizedBox(
+              height: 8,
+            ),
+
+            const Text(
+              'Todas as rodadas foram concluídas e a classificação final está disponível.',
+              textAlign:
+                  TextAlign.center,
+            ),
+
+            const SizedBox(
+              height: 20,
+            ),
+
+            SizedBox(
+              width:
+                  double.infinity,
+              child:
+                  ElevatedButton.icon(
+                onPressed:
+                    onVerClassificacao,
+                icon:
+                    const Icon(
+                  Icons.leaderboard,
+                ),
+                label:
+                    const Text(
+                  'Ver classificação final',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoLinha
+    extends StatelessWidget {
   final IconData icone;
   final String titulo;
   final String valor;
@@ -806,7 +1329,9 @@ class _InfoLinha extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Row(
       children: [
         Icon(
@@ -821,12 +1346,15 @@ class _InfoLinha extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment:
-                CrossAxisAlignment.start,
+                CrossAxisAlignment
+                    .start,
             children: [
               Text(
                 titulo,
                 style:
-                    Theme.of(context)
+                    Theme.of(
+                      context,
+                    )
                         .textTheme
                         .bodySmall,
               ),
@@ -836,7 +1364,8 @@ class _InfoLinha extends StatelessWidget {
                 style:
                     const TextStyle(
                   fontWeight:
-                      FontWeight.w600,
+                      FontWeight
+                          .w600,
                 ),
               ),
             ],
@@ -858,25 +1387,35 @@ class _ResumoParticipantes
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Container(
       padding:
-          const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+          const EdgeInsets.all(
+        16,
+      ),
+      decoration:
+          BoxDecoration(
         border: Border.all(
           color:
               Theme.of(context)
                   .dividerColor,
         ),
         borderRadius:
-            BorderRadius.circular(12),
+            BorderRadius.circular(
+          12,
+        ),
       ),
       child: Column(
         children: [
           Text(
-            quantidade.toString(),
+            quantidade
+                .toString(),
             style:
-                Theme.of(context)
+                Theme.of(
+                  context,
+                )
                     .textTheme
                     .headlineSmall,
           ),

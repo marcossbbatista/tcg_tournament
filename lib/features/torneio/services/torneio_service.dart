@@ -5,7 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/torneio_model.dart';
 
 class TorneioService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
 
   Future<TorneioModel> criarTorneio({
     required String nome,
@@ -14,49 +15,93 @@ class TorneioService {
     required int quantidadeRodadas,
     required String criadoPor,
   }) async {
-    final String codigo = await _gerarCodigoUnico();
+    final codigo =
+        await _gerarCodigoUnico();
 
-    final DocumentReference<Map<String, dynamic>> documento =
-        _firestore.collection('tournaments').doc();
+    final torneioRef =
+        _firestore
+            .collection('tournaments')
+            .doc();
 
-    final torneio = TorneioModel(
-      id: documento.id,
+    final torneio =
+        TorneioModel(
+      id: torneioRef.id,
       nome: nome,
       codigo: codigo,
       dataHora: dataHora,
       formato: formato,
-      quantidadeRodadas: quantidadeRodadas,
+      quantidadeRodadas:
+          quantidadeRodadas,
       rodadaAtual: 0,
       status: 'inscricoes',
       criadoPor: criadoPor,
       criadoEm: DateTime.now(),
     );
 
-    await documento.set(torneio.toMap());
+    await torneioRef.set(
+      torneio.toMap(),
+    );
 
     return torneio;
   }
 
-  Stream<List<TorneioModel>> listarTorneiosDoAdm(
+  Future<String>
+      _gerarCodigoUnico() async {
+    final random = Random();
+
+    while (true) {
+      final numero =
+          random.nextInt(9000) + 1000;
+
+      final codigo =
+          'TCG$numero';
+
+      final snapshot =
+          await _firestore
+              .collection('tournaments')
+              .where(
+                'codigo',
+                isEqualTo: codigo,
+              )
+              .limit(1)
+              .get();
+
+      if (snapshot.docs.isEmpty) {
+        return codigo;
+      }
+    }
+  }
+
+  Stream<List<TorneioModel>>
+      listarTorneiosDoAdm(
     String uid,
   ) {
     return _firestore
         .collection('tournaments')
-        .where('criadoPor', isEqualTo: uid)
+        .where(
+          'criadoPor',
+          isEqualTo: uid,
+        )
         .snapshots()
         .map(
           (snapshot) {
-            final torneios = snapshot.docs
-                .map(
-                  (doc) => TorneioModel.fromMap(
-                    doc.id,
-                    doc.data(),
-                  ),
-                )
-                .toList();
+            final torneios =
+                snapshot.docs
+                    .map(
+                      (doc) =>
+                          TorneioModel
+                              .fromMap(
+                        doc.id,
+                        doc.data(),
+                      ),
+                    )
+                    .toList();
 
             torneios.sort(
-              (a, b) => a.dataHora.compareTo(b.dataHora),
+              (a, b) =>
+                  b.dataHora.compareTo(
+                a.dataHora,
+              ),
             );
 
             return torneios;
@@ -64,51 +109,130 @@ class TorneioService {
         );
   }
 
-  Future<String> _gerarCodigoUnico() async {
-    final Random random = Random();
+  Stream<TorneioModel?>
+      observarTorneio(
+    String torneioId,
+  ) {
+    return _firestore
+        .collection('tournaments')
+        .doc(torneioId)
+        .snapshots()
+        .map(
+          (doc) {
+            if (!doc.exists) {
+              return null;
+            }
 
-    while (true) {
-      final int numero = 1000 + random.nextInt(9000);
+            final dados =
+                doc.data();
 
-      final String codigo = 'TCG$numero';
+            if (dados == null) {
+              return null;
+            }
 
-      final QuerySnapshot<Map<String, dynamic>> resultado =
-          await _firestore
-              .collection('tournaments')
-              .where('codigo', isEqualTo: codigo)
-              .limit(1)
-              .get();
-
-      if (resultado.docs.isEmpty) {
-        return codigo;
-      }
-    }
+            return TorneioModel.fromMap(
+              doc.id,
+              dados,
+            );
+          },
+        );
   }
 
-  Stream<TorneioModel?> observarTorneio(
-  String torneioId,
-) {
-  return _firestore
-      .collection('tournaments')
-      .doc(torneioId)
-      .snapshots()
-      .map(
-        (doc) {
-          if (!doc.exists) {
-            return null;
-          }
+  Future<String> finalizarTorneio({
+    required String torneioId,
+  }) async {
+    final torneioRef =
+        _firestore
+            .collection('tournaments')
+            .doc(torneioId);
 
-          final dados = doc.data();
+    return _firestore
+        .runTransaction<String>(
+      (transaction) async {
+        final torneioSnapshot =
+            await transaction.get(
+          torneioRef,
+        );
 
-          if (dados == null) {
-            return null;
-          }
+        if (!torneioSnapshot.exists) {
+          return 'torneio_nao_encontrado';
+        }
 
-          return TorneioModel.fromMap(
-            doc.id,
-            dados,
-          );
-        },
-      );
-}
+        final dadosTorneio =
+            torneioSnapshot.data();
+
+        if (dadosTorneio == null) {
+          return 'torneio_nao_encontrado';
+        }
+
+        final status =
+            dadosTorneio['status'];
+
+        if (status == 'finalizado') {
+          return 'torneio_finalizado';
+        }
+
+        if (status !=
+            'em_andamento') {
+          return 'status_invalido';
+        }
+
+        final rodadaAtual =
+            dadosTorneio[
+                    'rodadaAtual'] ??
+                0;
+
+        final quantidadeRodadas =
+            dadosTorneio[
+                    'quantidadeRodadas'] ??
+                0;
+
+        if (rodadaAtual <= 0) {
+          return 'rodada_invalida';
+        }
+
+        if (rodadaAtual <
+            quantidadeRodadas) {
+          return 'rodadas_pendentes';
+        }
+
+        final rodadaRef =
+            torneioRef
+                .collection('rounds')
+                .doc(
+                  rodadaAtual
+                      .toString(),
+                );
+
+        final rodadaSnapshot =
+            await transaction.get(
+          rodadaRef,
+        );
+
+        if (!rodadaSnapshot.exists) {
+          return 'rodada_nao_encontrada';
+        }
+
+        final dadosRodada =
+            rodadaSnapshot.data();
+
+        if (dadosRodada?['status'] !=
+            'finalizada') {
+          return 'rodada_nao_finalizada';
+        }
+
+        transaction.update(
+          torneioRef,
+          {
+            'status':
+                'finalizado',
+            'finalizadoEm':
+                Timestamp.now(),
+          },
+        );
+
+        return 'ok';
+      },
+    );
+  }
 }
