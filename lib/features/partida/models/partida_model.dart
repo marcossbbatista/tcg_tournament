@@ -13,6 +13,8 @@ class PartidaModel {
   final int placarJogador1;
   final int placarJogador2;
 
+  final String? resultadoInformadoPor;
+
   final bool bye;
 
   PartidaModel({
@@ -25,6 +27,7 @@ class PartidaModel {
     required this.status,
     required this.placarJogador1,
     required this.placarJogador2,
+    this.resultadoInformadoPor,
     required this.bye,
   });
 
@@ -38,6 +41,7 @@ class PartidaModel {
       'status': status,
       'placarJogador1': placarJogador1,
       'placarJogador2': placarJogador2,
+      'resultadoInformadoPor': resultadoInformadoPor,
       'bye': bye,
     };
   }
@@ -53,9 +57,10 @@ class PartidaModel {
       jogador1Nome: map['jogador1Nome'] ?? '',
       jogador2Uid: map['jogador2Uid'],
       jogador2Nome: map['jogador2Nome'],
-      status: map['status'] ?? 'aguardando',
+      status: map['status'] ?? 'em_andamento',
       placarJogador1: map['placarJogador1'] ?? 0,
       placarJogador2: map['placarJogador2'] ?? 0,
+      resultadoInformadoPor: map['resultadoInformadoPor'],
       bye: map['bye'] ?? false,
     );
   }

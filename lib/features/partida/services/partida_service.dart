@@ -6,11 +6,11 @@ class PartidaService {
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
 
-  Future<PartidaModel?> buscarPartidaDoJogador({
+  Stream<PartidaModel?> observarPartidaDoJogador({
     required String torneioId,
     required int rodada,
     required String jogadorUid,
-  }) async {
+  }) {
     final matchesRef = _firestore
         .collection('tournaments')
         .doc(torneioId)
@@ -18,40 +18,84 @@ class PartidaService {
         .doc(rodada.toString())
         .collection('matches');
 
-    final jogador1 = await matchesRef
-        .where(
-          'jogador1Uid',
-          isEqualTo: jogadorUid,
-        )
-        .limit(1)
-        .get();
+    return matchesRef.snapshots().map(
+      (snapshot) {
+        for (final doc in snapshot.docs) {
+          final dados = doc.data();
 
-    if (jogador1.docs.isNotEmpty) {
-      final doc = jogador1.docs.first;
+          if (dados['jogador1Uid'] == jogadorUid ||
+              dados['jogador2Uid'] == jogadorUid) {
+            return PartidaModel.fromMap(
+              doc.id,
+              dados,
+            );
+          }
+        }
 
-      return PartidaModel.fromMap(
-        doc.id,
-        doc.data(),
-      );
-    }
+        return null;
+      },
+    );
+  }
 
-    final jogador2 = await matchesRef
-        .where(
-          'jogador2Uid',
-          isEqualTo: jogadorUid,
-        )
-        .limit(1)
-        .get();
+  Future<void> informarResultado({
+    required String torneioId,
+    required int rodada,
+    required String partidaId,
+    required int placarJogador1,
+    required int placarJogador2,
+    required String informadoPor,
+  }) async {
+    await _partidaRef(
+      torneioId: torneioId,
+      rodada: rodada,
+      partidaId: partidaId,
+    ).update({
+      'placarJogador1': placarJogador1,
+      'placarJogador2': placarJogador2,
+      'resultadoInformadoPor': informadoPor,
+      'status': 'aguardando_confirmacao',
+    });
+  }
 
-    if (jogador2.docs.isNotEmpty) {
-      final doc = jogador2.docs.first;
+  Future<void> confirmarResultado({
+    required String torneioId,
+    required int rodada,
+    required String partidaId,
+  }) async {
+    await _partidaRef(
+      torneioId: torneioId,
+      rodada: rodada,
+      partidaId: partidaId,
+    ).update({
+      'status': 'finalizada',
+    });
+  }
 
-      return PartidaModel.fromMap(
-        doc.id,
-        doc.data(),
-      );
-    }
+  Future<void> contestarResultado({
+    required String torneioId,
+    required int rodada,
+    required String partidaId,
+  }) async {
+    await _partidaRef(
+      torneioId: torneioId,
+      rodada: rodada,
+      partidaId: partidaId,
+    ).update({
+      'status': 'contestada',
+    });
+  }
 
-    return null;
+  DocumentReference<Map<String, dynamic>> _partidaRef({
+    required String torneioId,
+    required int rodada,
+    required String partidaId,
+  }) {
+    return _firestore
+        .collection('tournaments')
+        .doc(torneioId)
+        .collection('rounds')
+        .doc(rodada.toString())
+        .collection('matches')
+        .doc(partidaId);
   }
 }
