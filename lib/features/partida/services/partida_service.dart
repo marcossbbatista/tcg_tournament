@@ -98,4 +98,53 @@ class PartidaService {
         .collection('matches')
         .doc(partidaId);
   }
+
+  Stream<List<PartidaModel>> observarPartidasDaRodada({
+  required String torneioId,
+  required int rodada,
+}) {
+  return _firestore
+      .collection('tournaments')
+      .doc(torneioId)
+      .collection('rounds')
+      .doc(rodada.toString())
+      .collection('matches')
+      .snapshots()
+      .map(
+        (snapshot) {
+          final partidas = snapshot.docs
+              .map(
+                (doc) => PartidaModel.fromMap(
+                  doc.id,
+                  doc.data(),
+                ),
+              )
+              .toList();
+
+          partidas.sort(
+            (a, b) => a.mesa.compareTo(b.mesa),
+          );
+
+          return partidas;
+        },
+      );
+}
+
+Future<void> resolverPartidaContestada({
+  required String torneioId,
+  required int rodada,
+  required String partidaId,
+  required int placarJogador1,
+  required int placarJogador2,
+}) async {
+  await _partidaRef(
+    torneioId: torneioId,
+    rodada: rodada,
+    partidaId: partidaId,
+  ).update({
+    'placarJogador1': placarJogador1,
+    'placarJogador2': placarJogador2,
+    'status': 'finalizada',
+  });
+}
 }
