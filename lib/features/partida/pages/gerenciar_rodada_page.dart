@@ -20,6 +20,151 @@ class GerenciarRodadaPage extends StatelessWidget {
     required this.formato,
   });
 
+  Future<void> _editarRodada(
+    BuildContext context,
+  ) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            EditarRodadaPage(
+          torneioId: torneioId,
+          rodada: rodada,
+          nomeTorneio: nomeTorneio,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _iniciarRodada(
+    BuildContext context,
+  ) async {
+    final confirmar =
+        await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Iniciar rodada',
+          ),
+          content: Text(
+            'Deseja iniciar a Rodada $rodada? '
+            'Os confrontos ficarão disponíveis para os jogadores.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  false,
+                );
+              },
+              child: const Text(
+                'Cancelar',
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  true,
+                );
+              },
+              child: const Text(
+                'Iniciar',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true) {
+      return;
+    }
+
+    try {
+      final resultado =
+          await RodadaService().iniciarRodada(
+        torneioId: torneioId,
+        rodada: rodada,
+      );
+
+      if (!context.mounted) return;
+
+      switch (resultado) {
+        case 'ok':
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Rodada iniciada com sucesso.',
+              ),
+            ),
+          );
+
+          break;
+
+        case 'rodada_ja_iniciada':
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'A rodada já foi iniciada.',
+              ),
+            ),
+          );
+
+          break;
+
+        case 'rodada_finalizada':
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'A rodada já foi finalizada.',
+              ),
+            ),
+          );
+
+          break;
+
+        case 'nenhuma_partida':
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Configure os confrontos antes de iniciar a rodada.',
+              ),
+            ),
+          );
+
+          break;
+
+        default:
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Não foi possível iniciar a rodada.',
+              ),
+            ),
+          );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível iniciar a rodada.',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _encerrarRodada(
     BuildContext context,
   ) async {
@@ -33,7 +178,7 @@ class GerenciarRodadaPage extends StatelessWidget {
           ),
           content: Text(
             'Deseja encerrar a Rodada $rodada? '
-            'Os pontos das partidas serão calculados e não poderão ser aplicados novamente.',
+            'Os pontos das partidas serão calculados.',
           ),
           actions: [
             TextButton(
@@ -43,12 +188,10 @@ class GerenciarRodadaPage extends StatelessWidget {
                   false,
                 );
               },
-              child:
-                  const Text(
+              child: const Text(
                 'Cancelar',
               ),
             ),
-
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(
@@ -56,8 +199,7 @@ class GerenciarRodadaPage extends StatelessWidget {
                   true,
                 );
               },
-              child:
-                  const Text(
+              child: const Text(
                 'Encerrar',
               ),
             ),
@@ -90,11 +232,6 @@ class GerenciarRodadaPage extends StatelessWidget {
             ),
           );
 
-          Navigator.pop(
-            context,
-            true,
-          );
-
           break;
 
         case 'partida_pendente':
@@ -115,18 +252,6 @@ class GerenciarRodadaPage extends StatelessWidget {
             const SnackBar(
               content: Text(
                 'Esta rodada já foi encerrada.',
-              ),
-            ),
-          );
-
-          break;
-
-        case 'nenhuma_partida':
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Nenhuma partida encontrada nesta rodada.',
               ),
             ),
           );
@@ -157,27 +282,13 @@ class GerenciarRodadaPage extends StatelessWidget {
     }
   }
 
-  Future<void> _editarRodada(
-    BuildContext context,
-  ) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            EditarRodadaPage(
-          torneioId: torneioId,
-          rodada: rodada,
-          nomeTorneio:
-              nomeTorneio,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final PartidaService partidaService =
         PartidaService();
+
+    final RodadaService rodadaService =
+        RodadaService();
 
     return Scaffold(
       appBar: AppBar(
@@ -185,306 +296,453 @@ class GerenciarRodadaPage extends StatelessWidget {
           'Rodada $rodada',
         ),
       ),
-      body: StreamBuilder<List<PartidaModel>>(
+      body: StreamBuilder<String?>(
         stream:
-            partidaService.observarPartidasDaRodada(
+            rodadaService.observarStatusRodada(
           torneioId: torneioId,
           rodada: rodada,
         ),
         builder: (
           context,
-          snapshot,
+          rodadaSnapshot,
         ) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
+          if (rodadaSnapshot.connectionState ==
+                  ConnectionState.waiting &&
+              !rodadaSnapshot.hasData) {
             return const Center(
               child:
                   CircularProgressIndicator(),
             );
           }
 
-          if (snapshot.hasError) {
+          if (rodadaSnapshot.hasError) {
             return const Center(
               child: Text(
-                'Não foi possível carregar as partidas.',
+                'Não foi possível carregar a rodada.',
               ),
             );
           }
 
-          final partidas =
-              snapshot.data ?? [];
+          final statusRodada =
+              rodadaSnapshot.data;
 
-          if (partidas.isEmpty) {
-            return ListView(
-              padding:
-                  const EdgeInsets.all(16),
-              children: [
-                Text(
-                  nomeTorneio,
-                  style:
-                      Theme.of(context)
-                          .textTheme
-                          .titleLarge,
-                ),
+          return StreamBuilder<
+              List<PartidaModel>>(
+            stream:
+                partidaService
+                    .observarPartidasDaRodada(
+              torneioId: torneioId,
+              rodada: rodada,
+            ),
+            builder: (
+              context,
+              snapshot,
+            ) {
+              if (snapshot.connectionState ==
+                      ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return const Center(
+                  child:
+                      CircularProgressIndicator(),
+                );
+              }
 
-                const SizedBox(
-                  height: 8,
-                ),
-
-                Text(
-                  'Rodada $rodada',
-                  style:
-                      Theme.of(context)
-                          .textTheme
-                          .headlineSmall,
-                ),
-
-                const SizedBox(
-                  height: 24,
-                ),
-
-                OutlinedButton.icon(
-                  onPressed: () =>
-                      _editarRodada(
-                    context,
+              if (snapshot.hasError) {
+                return const Center(
+                  child: Text(
+                    'Não foi possível carregar as partidas.',
                   ),
-                  icon:
-                      const Icon(
-                    Icons.edit,
+                );
+              }
+
+              final partidas =
+                  snapshot.data ?? [];
+
+              final finalizadas =
+                  partidas
+                      .where(
+                        (partida) =>
+                            partida.status ==
+                            'finalizada',
+                      )
+                      .length;
+
+              final contestadas =
+                  partidas
+                      .where(
+                        (partida) =>
+                            partida.status ==
+                            'contestada',
+                      )
+                      .length;
+
+              final aguardandoConfirmacao =
+                  partidas
+                      .where(
+                        (partida) =>
+                            partida.status ==
+                            'aguardando_confirmacao',
+                      )
+                      .length;
+
+              final emAndamento =
+                  partidas
+                      .where(
+                        (partida) =>
+                            partida.status ==
+                            'em_andamento',
+                      )
+                      .length;
+
+              final podeEncerrar =
+                  partidas.isNotEmpty &&
+                      partidas.every(
+                        (partida) =>
+                            partida.status ==
+                            'finalizada',
+                      );
+
+              return ListView(
+                padding:
+                    const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    nomeTorneio,
+                    style:
+                        Theme.of(context)
+                            .textTheme
+                            .titleLarge,
                   ),
-                  label:
+
+                  const SizedBox(
+                    height: 8,
+                  ),
+
+                  Text(
+                    'Rodada $rodada',
+                    style:
+                        Theme.of(context)
+                            .textTheme
+                            .headlineSmall,
+                  ),
+
+                  const SizedBox(
+                    height: 8,
+                  ),
+
+                  _StatusRodada(
+                    status:
+                        statusRodada,
+                  ),
+
+                  const SizedBox(
+                    height: 24,
+                  ),
+
+                  if (statusRodada ==
+                      'configuracao') ...[
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          _editarRodada(
+                        context,
+                      ),
+                      icon:
+                          const Icon(
+                        Icons.edit,
+                      ),
+                      label:
+                          const Text(
+                        'Editar confrontos',
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 12,
+                    ),
+
+                    ElevatedButton.icon(
+                      onPressed:
+                          partidas.isEmpty
+                              ? null
+                              : () =>
+                                  _iniciarRodada(
+                                context,
+                              ),
+                      icon:
+                          const Icon(
+                        Icons.play_arrow,
+                      ),
+                      label:
+                          const Text(
+                        'Iniciar rodada',
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 24,
+                    ),
+                  ],
+
+                  if (statusRodada ==
+                      'em_andamento') ...[
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          _editarRodada(
+                        context,
+                      ),
+                      icon:
+                          const Icon(
+                        Icons.edit,
+                      ),
+                      label:
+                          const Text(
+                        'Editar confrontos',
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 24,
+                    ),
+                  ],
+
+                  if (statusRodada ==
+                      'finalizada') ...[
+                    const Card(
+                      child: Padding(
+                        padding:
+                            EdgeInsets.all(
+                          16,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons
+                                  .check_circle,
+                            ),
+                            SizedBox(
+                              width: 12,
+                            ),
+                            Expanded(
+                              child: Text(
+                                'Rodada finalizada.',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 24,
+                    ),
+                  ],
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child:
+                            _ResumoRodada(
+                          titulo:
+                              'Finalizadas',
+                          valor:
+                              '$finalizadas/${partidas.length}',
+                        ),
+                      ),
+
+                      const SizedBox(
+                        width: 12,
+                      ),
+
+                      Expanded(
+                        child:
+                            _ResumoRodada(
+                          titulo:
+                              'Contestadas',
+                          valor:
+                              contestadas
+                                  .toString(),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(
+                    height: 12,
+                  ),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child:
+                            _ResumoRodada(
+                          titulo:
+                              'Em andamento',
+                          valor:
+                              emAndamento
+                                  .toString(),
+                        ),
+                      ),
+
+                      const SizedBox(
+                        width: 12,
+                      ),
+
+                      Expanded(
+                        child:
+                            _ResumoRodada(
+                          titulo:
+                              'Aguardando',
+                          valor:
+                              aguardandoConfirmacao
+                                  .toString(),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(
+                    height: 24,
+                  ),
+
+                  if (partidas.isEmpty)
+                    const Card(
+                      child: Padding(
+                        padding:
+                            EdgeInsets.all(
+                          24,
+                        ),
+                        child: Text(
+                          'Nenhum confronto configurado.',
+                          textAlign:
+                              TextAlign.center,
+                        ),
+                      ),
+                    )
+                  else
+                    ...partidas.map(
+                      (partida) =>
+                          _PartidaAdmCard(
+                        torneioId:
+                            torneioId,
+                        rodada:
+                            rodada,
+                        formato:
+                            formato,
+                        partida:
+                            partida,
+                      ),
+                    ),
+
+                  if (statusRodada ==
+                      'em_andamento') ...[
+                    const SizedBox(
+                      height: 24,
+                    ),
+
+                    ElevatedButton.icon(
+                      onPressed:
+                          podeEncerrar
+                              ? () =>
+                                  _encerrarRodada(
+                                context,
+                              )
+                              : null,
+                      icon:
+                          const Icon(
+                        Icons.flag,
+                      ),
+                      label:
+                          const Text(
+                        'Encerrar rodada',
+                      ),
+                    ),
+
+                    if (!podeEncerrar) ...[
+                      const SizedBox(
+                        height: 8,
+                      ),
+
                       const Text(
-                    'Editar confrontos',
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 24,
-                ),
-
-                const Card(
-                  child: Padding(
-                    padding:
-                        EdgeInsets.all(24),
-                    child: Text(
-                      'Nenhuma partida encontrada nesta rodada.',
-                      textAlign:
-                          TextAlign.center,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          }
-
-          final finalizadas =
-              partidas
-                  .where(
-                    (partida) =>
-                        partida.status ==
-                        'finalizada',
-                  )
-                  .length;
-
-          final contestadas =
-              partidas
-                  .where(
-                    (partida) =>
-                        partida.status ==
-                        'contestada',
-                  )
-                  .length;
-
-          final aguardandoConfirmacao =
-              partidas
-                  .where(
-                    (partida) =>
-                        partida.status ==
-                        'aguardando_confirmacao',
-                  )
-                  .length;
-
-          final emAndamento =
-              partidas
-                  .where(
-                    (partida) =>
-                        partida.status ==
-                        'em_andamento',
-                  )
-                  .length;
-
-          final podeEncerrar =
-              partidas.every(
-            (partida) =>
-                partida.status ==
-                'finalizada',
-          );
-
-          return ListView(
-            padding:
-                const EdgeInsets.all(16),
-            children: [
-              Text(
-                nomeTorneio,
-                style:
-                    Theme.of(context)
-                        .textTheme
-                        .titleLarge,
-              ),
-
-              const SizedBox(
-                height: 8,
-              ),
-
-              Text(
-                'Rodada $rodada',
-                style:
-                    Theme.of(context)
-                        .textTheme
-                        .headlineSmall,
-              ),
-
-              const SizedBox(
-                height: 24,
-              ),
-
-              OutlinedButton.icon(
-                onPressed: () =>
-                    _editarRodada(
-                  context,
-                ),
-                icon:
-                    const Icon(
-                  Icons.edit,
-                ),
-                label:
-                    const Text(
-                  'Editar confrontos',
-                ),
-              ),
-
-              const SizedBox(
-                height: 24,
-              ),
-
-              Row(
-                children: [
-                  Expanded(
-                    child:
-                        _ResumoRodada(
-                      titulo:
-                          'Finalizadas',
-                      valor:
-                          '$finalizadas/${partidas.length}',
-                    ),
-                  ),
-
-                  const SizedBox(
-                    width: 12,
-                  ),
-
-                  Expanded(
-                    child:
-                        _ResumoRodada(
-                      titulo:
-                          'Contestadas',
-                      valor:
-                          contestadas
-                              .toString(),
-                    ),
-                  ),
+                        'Todas as partidas precisam estar finalizadas antes de encerrar a rodada.',
+                        textAlign:
+                            TextAlign.center,
+                      ),
+                    ],
+                  ],
                 ],
-              ),
-
-              const SizedBox(
-                height: 12,
-              ),
-
-              Row(
-                children: [
-                  Expanded(
-                    child:
-                        _ResumoRodada(
-                      titulo:
-                          'Em andamento',
-                      valor:
-                          emAndamento
-                              .toString(),
-                    ),
-                  ),
-
-                  const SizedBox(
-                    width: 12,
-                  ),
-
-                  Expanded(
-                    child:
-                        _ResumoRodada(
-                      titulo:
-                          'Aguardando',
-                      valor:
-                          aguardandoConfirmacao
-                              .toString(),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(
-                height: 24,
-              ),
-
-              ...partidas.map(
-                (partida) =>
-                    _PartidaAdmCard(
-                  torneioId:
-                      torneioId,
-                  rodada:
-                      rodada,
-                  formato:
-                      formato,
-                  partida:
-                      partida,
-                ),
-              ),
-
-              const SizedBox(
-                height: 24,
-              ),
-
-              ElevatedButton.icon(
-                onPressed:
-                    podeEncerrar
-                        ? () =>
-                            _encerrarRodada(
-                          context,
-                        )
-                        : null,
-                icon:
-                    const Icon(
-                  Icons.flag,
-                ),
-                label:
-                    const Text(
-                  'Encerrar rodada',
-                ),
-              ),
-
-              if (!podeEncerrar) ...[
-                const SizedBox(
-                  height: 8,
-                ),
-
-                const Text(
-                  'Todas as partidas precisam estar finalizadas antes de encerrar a rodada.',
-                  textAlign:
-                      TextAlign.center,
-                ),
-              ],
-            ],
+              );
+            },
           );
         },
       ),
+    );
+  }
+}
+
+class _StatusRodada extends StatelessWidget {
+  final String? status;
+
+  const _StatusRodada({
+    required this.status,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    String texto;
+    IconData icone;
+
+    switch (status) {
+      case 'configuracao':
+        texto =
+            'Aguardando configuração';
+        icone =
+            Icons.settings;
+
+        break;
+
+      case 'em_andamento':
+        texto =
+            'Em andamento';
+        icone =
+            Icons.play_circle;
+
+        break;
+
+      case 'finalizada':
+        texto =
+            'Finalizada';
+        icone =
+            Icons.check_circle;
+
+        break;
+
+      default:
+        texto =
+            'Status não identificado';
+        icone =
+            Icons.help_outline;
+    }
+
+    return Row(
+      children: [
+        Icon(
+          icone,
+          size: 20,
+        ),
+
+        const SizedBox(
+          width: 8,
+        ),
+
+        Text(
+          texto,
+          style:
+              const TextStyle(
+            fontWeight:
+                FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -600,13 +858,12 @@ class _PartidaAdmCard extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      partida.jogador1Nome,
+                      partida
+                          .jogador1Nome,
                       style:
                           Theme.of(context)
                               .textTheme
                               .titleMedium,
-                      textAlign:
-                          TextAlign.center,
                     ),
 
                     const SizedBox(
@@ -624,7 +881,8 @@ class _PartidaAdmCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      partida.jogador1Nome,
+                      partida
+                          .jogador1Nome,
                       textAlign:
                           TextAlign.center,
                       style:
@@ -637,7 +895,8 @@ class _PartidaAdmCard extends StatelessWidget {
 
                   Padding(
                     padding:
-                        const EdgeInsets.symmetric(
+                        const EdgeInsets
+                            .symmetric(
                       horizontal: 12,
                     ),
                     child: Text(
@@ -651,7 +910,8 @@ class _PartidaAdmCard extends StatelessWidget {
 
                   Expanded(
                     child: Text(
-                      partida.jogador2Nome ??
+                      partida
+                              .jogador2Nome ??
                           '',
                       textAlign:
                           TextAlign.center,
@@ -765,7 +1025,8 @@ class _PartidaAdmCard extends StatelessWidget {
                         .toList(),
                     onChanged: (valor) {
                       setDialogState(() {
-                        placar1 = valor;
+                        placar1 =
+                            valor;
                       });
                     },
                   ),
@@ -797,7 +1058,8 @@ class _PartidaAdmCard extends StatelessWidget {
                         .toList(),
                     onChanged: (valor) {
                       setDialogState(() {
-                        placar2 = valor;
+                        placar2 =
+                            valor;
                       });
                     },
                   ),
