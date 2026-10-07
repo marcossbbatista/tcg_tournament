@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/partida_model.dart';
 import '../services/partida_service.dart';
+import '../services/rodada_service.dart';
 
 class GerenciarRodadaPage extends StatelessWidget {
   final String torneioId;
@@ -16,6 +17,140 @@ class GerenciarRodadaPage extends StatelessWidget {
     required this.rodada,
     required this.formato,
   });
+
+  Future<void> _encerrarRodada(
+  BuildContext context,
+) async {
+  final confirmar =
+      await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text(
+          'Encerrar rodada',
+        ),
+        content: Text(
+          'Deseja encerrar a Rodada $rodada? '
+          'Os pontos das partidas serão calculados e não poderão ser aplicados novamente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(
+                context,
+                false,
+              );
+            },
+            child: const Text(
+              'Cancelar',
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(
+                context,
+                true,
+              );
+            },
+            child: const Text(
+              'Encerrar',
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirmar != true) {
+    return;
+  }
+
+  try {
+    final resultado =
+        await RodadaService().encerrarRodada(
+      torneioId: torneioId,
+      rodada: rodada,
+    );
+
+    if (!context.mounted) return;
+
+    switch (resultado) {
+      case 'ok':
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Rodada encerrada e pontuação calculada com sucesso.',
+            ),
+          ),
+        );
+
+        Navigator.pop(
+          context,
+          true,
+        );
+
+        break;
+
+      case 'partida_pendente':
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Todas as partidas precisam estar finalizadas.',
+            ),
+          ),
+        );
+
+        break;
+
+      case 'rodada_finalizada':
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Esta rodada já foi encerrada.',
+            ),
+          ),
+        );
+
+        break;
+
+      case 'nenhuma_partida':
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nenhuma partida encontrada nesta rodada.',
+            ),
+          ),
+        );
+
+        break;
+
+      default:
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Não foi possível encerrar a rodada.',
+            ),
+          ),
+        );
+    }
+  } catch (e) {
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Não foi possível encerrar a rodada.',
+        ),
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -144,17 +279,9 @@ class GerenciarRodadaPage extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed:
                     podeEncerrar
-                        ? () {
-                            ScaffoldMessenger.of(
+                        ? () => _encerrarRodada(
                               context,
-                            ).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'O encerramento da rodada será implementado na próxima etapa.',
-                                ),
-                              ),
-                            );
-                          }
+                            )
                         : null,
                 icon: const Icon(
                   Icons.flag,
