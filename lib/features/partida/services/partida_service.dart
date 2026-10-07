@@ -147,4 +147,32 @@ Future<void> resolverPartidaContestada({
     'status': 'finalizada',
   });
 }
+
+Future<List<PartidaModel>> buscarPartidasDaRodada({
+  required String torneioId,
+  required int rodada,
+}) async {
+  final snapshot = await _firestore
+      .collection('tournaments')
+      .doc(torneioId)
+      .collection('rounds')
+      .doc(rodada.toString())
+      .collection('matches')
+      .get();
+
+  final partidas = snapshot.docs
+      .map(
+        (doc) => PartidaModel.fromMap(
+          doc.id,
+          doc.data(),
+        ),
+      )
+      .toList();
+
+  partidas.sort(
+    (a, b) => a.mesa.compareTo(b.mesa),
+  );
+
+  return partidas;
+}
 }

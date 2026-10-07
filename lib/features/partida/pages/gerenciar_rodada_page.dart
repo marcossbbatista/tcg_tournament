@@ -4,6 +4,8 @@ import '../models/partida_model.dart';
 import '../services/partida_service.dart';
 import '../services/rodada_service.dart';
 
+import 'editar_rodada_page.dart';
+
 class GerenciarRodadaPage extends StatelessWidget {
   final String torneioId;
   final String nomeTorneio;
@@ -19,138 +21,158 @@ class GerenciarRodadaPage extends StatelessWidget {
   });
 
   Future<void> _encerrarRodada(
-  BuildContext context,
-) async {
-  final confirmar =
-      await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text(
-          'Encerrar rodada',
-        ),
-        content: Text(
-          'Deseja encerrar a Rodada $rodada? '
-          'Os pontos das partidas serão calculados e não poderão ser aplicados novamente.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(
-                context,
-                false,
-              );
-            },
-            child: const Text(
-              'Cancelar',
-            ),
+    BuildContext context,
+  ) async {
+    final confirmar =
+        await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Encerrar rodada',
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(
-                context,
-                true,
-              );
-            },
-            child: const Text(
-              'Encerrar',
-            ),
+          content: Text(
+            'Deseja encerrar a Rodada $rodada? '
+            'Os pontos das partidas serão calculados e não poderão ser aplicados novamente.',
           ),
-        ],
-      );
-    },
-  );
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  false,
+                );
+              },
+              child:
+                  const Text(
+                'Cancelar',
+              ),
+            ),
 
-  if (confirmar != true) {
-    return;
-  }
-
-  try {
-    final resultado =
-        await RodadaService().encerrarRodada(
-      torneioId: torneioId,
-      rodada: rodada,
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  true,
+                );
+              },
+              child:
+                  const Text(
+                'Encerrar',
+              ),
+            ),
+          ],
+        );
+      },
     );
 
-    if (!context.mounted) return;
-
-    switch (resultado) {
-      case 'ok':
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Rodada encerrada e pontuação calculada com sucesso.',
-            ),
-          ),
-        );
-
-        Navigator.pop(
-          context,
-          true,
-        );
-
-        break;
-
-      case 'partida_pendente':
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Todas as partidas precisam estar finalizadas.',
-            ),
-          ),
-        );
-
-        break;
-
-      case 'rodada_finalizada':
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Esta rodada já foi encerrada.',
-            ),
-          ),
-        );
-
-        break;
-
-      case 'nenhuma_partida':
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Nenhuma partida encontrada nesta rodada.',
-            ),
-          ),
-        );
-
-        break;
-
-      default:
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Não foi possível encerrar a rodada.',
-            ),
-          ),
-        );
+    if (confirmar != true) {
+      return;
     }
-  } catch (e) {
-    if (!context.mounted) return;
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Não foi possível encerrar a rodada.',
+    try {
+      final resultado =
+          await RodadaService().encerrarRodada(
+        torneioId: torneioId,
+        rodada: rodada,
+      );
+
+      if (!context.mounted) return;
+
+      switch (resultado) {
+        case 'ok':
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Rodada encerrada e pontuação calculada com sucesso.',
+              ),
+            ),
+          );
+
+          Navigator.pop(
+            context,
+            true,
+          );
+
+          break;
+
+        case 'partida_pendente':
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Todas as partidas precisam estar finalizadas.',
+              ),
+            ),
+          );
+
+          break;
+
+        case 'rodada_finalizada':
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Esta rodada já foi encerrada.',
+              ),
+            ),
+          );
+
+          break;
+
+        case 'nenhuma_partida':
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Nenhuma partida encontrada nesta rodada.',
+              ),
+            ),
+          );
+
+          break;
+
+        default:
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Não foi possível encerrar a rodada.',
+              ),
+            ),
+          );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível encerrar a rodada.',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _editarRodada(
+    BuildContext context,
+  ) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            EditarRodadaPage(
+          torneioId: torneioId,
+          rodada: rodada,
+          nomeTorneio:
+              nomeTorneio,
         ),
       ),
     );
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +198,8 @@ class GerenciarRodadaPage extends StatelessWidget {
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(),
+              child:
+                  CircularProgressIndicator(),
             );
           }
 
@@ -192,111 +215,270 @@ class GerenciarRodadaPage extends StatelessWidget {
               snapshot.data ?? [];
 
           if (partidas.isEmpty) {
-            return const Center(
-              child: Text(
-                'Nenhuma partida encontrada nesta rodada.',
-              ),
+            return ListView(
+              padding:
+                  const EdgeInsets.all(16),
+              children: [
+                Text(
+                  nomeTorneio,
+                  style:
+                      Theme.of(context)
+                          .textTheme
+                          .titleLarge,
+                ),
+
+                const SizedBox(
+                  height: 8,
+                ),
+
+                Text(
+                  'Rodada $rodada',
+                  style:
+                      Theme.of(context)
+                          .textTheme
+                          .headlineSmall,
+                ),
+
+                const SizedBox(
+                  height: 24,
+                ),
+
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      _editarRodada(
+                    context,
+                  ),
+                  icon:
+                      const Icon(
+                    Icons.edit,
+                  ),
+                  label:
+                      const Text(
+                    'Editar confrontos',
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 24,
+                ),
+
+                const Card(
+                  child: Padding(
+                    padding:
+                        EdgeInsets.all(24),
+                    child: Text(
+                      'Nenhuma partida encontrada nesta rodada.',
+                      textAlign:
+                          TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
             );
           }
 
-          final finalizadas = partidas
-              .where(
-                (partida) =>
-                    partida.status == 'finalizada',
-              )
-              .length;
+          final finalizadas =
+              partidas
+                  .where(
+                    (partida) =>
+                        partida.status ==
+                        'finalizada',
+                  )
+                  .length;
 
-          final contestadas = partidas
-              .where(
-                (partida) =>
-                    partida.status == 'contestada',
-              )
-              .length;
+          final contestadas =
+              partidas
+                  .where(
+                    (partida) =>
+                        partida.status ==
+                        'contestada',
+                  )
+                  .length;
+
+          final aguardandoConfirmacao =
+              partidas
+                  .where(
+                    (partida) =>
+                        partida.status ==
+                        'aguardando_confirmacao',
+                  )
+                  .length;
+
+          final emAndamento =
+              partidas
+                  .where(
+                    (partida) =>
+                        partida.status ==
+                        'em_andamento',
+                  )
+                  .length;
 
           final podeEncerrar =
               partidas.every(
             (partida) =>
-                partida.status == 'finalizada',
+                partida.status ==
+                'finalizada',
           );
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding:
+                const EdgeInsets.all(16),
             children: [
               Text(
                 nomeTorneio,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge,
+                style:
+                    Theme.of(context)
+                        .textTheme
+                        .titleLarge,
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(
+                height: 8,
+              ),
 
               Text(
                 'Rodada $rodada',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall,
+                style:
+                    Theme.of(context)
+                        .textTheme
+                        .headlineSmall,
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(
+                height: 24,
+              ),
+
+              OutlinedButton.icon(
+                onPressed: () =>
+                    _editarRodada(
+                  context,
+                ),
+                icon:
+                    const Icon(
+                  Icons.edit,
+                ),
+                label:
+                    const Text(
+                  'Editar confrontos',
+                ),
+              ),
+
+              const SizedBox(
+                height: 24,
+              ),
 
               Row(
                 children: [
                   Expanded(
-                    child: _ResumoRodada(
-                      titulo: 'Finalizadas',
+                    child:
+                        _ResumoRodada(
+                      titulo:
+                          'Finalizadas',
                       valor:
                           '$finalizadas/${partidas.length}',
                     ),
                   ),
 
-                  const SizedBox(width: 12),
+                  const SizedBox(
+                    width: 12,
+                  ),
 
                   Expanded(
-                    child: _ResumoRodada(
-                      titulo: 'Contestadas',
+                    child:
+                        _ResumoRodada(
+                      titulo:
+                          'Contestadas',
                       valor:
-                          contestadas.toString(),
+                          contestadas
+                              .toString(),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(
+                height: 12,
+              ),
+
+              Row(
+                children: [
+                  Expanded(
+                    child:
+                        _ResumoRodada(
+                      titulo:
+                          'Em andamento',
+                      valor:
+                          emAndamento
+                              .toString(),
+                    ),
+                  ),
+
+                  const SizedBox(
+                    width: 12,
+                  ),
+
+                  Expanded(
+                    child:
+                        _ResumoRodada(
+                      titulo:
+                          'Aguardando',
+                      valor:
+                          aguardandoConfirmacao
+                              .toString(),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(
+                height: 24,
+              ),
 
               ...partidas.map(
                 (partida) =>
                     _PartidaAdmCard(
-                  torneioId: torneioId,
-                  rodada: rodada,
-                  formato: formato,
-                  partida: partida,
+                  torneioId:
+                      torneioId,
+                  rodada:
+                      rodada,
+                  formato:
+                      formato,
+                  partida:
+                      partida,
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(
+                height: 24,
+              ),
 
               ElevatedButton.icon(
                 onPressed:
                     podeEncerrar
-                        ? () => _encerrarRodada(
-                              context,
-                            )
+                        ? () =>
+                            _encerrarRodada(
+                          context,
+                        )
                         : null,
-                icon: const Icon(
+                icon:
+                    const Icon(
                   Icons.flag,
                 ),
-                label: const Text(
+                label:
+                    const Text(
                   'Encerrar rodada',
                 ),
               ),
 
               if (!podeEncerrar) ...[
-                const SizedBox(height: 8),
+                const SizedBox(
+                  height: 8,
+                ),
 
                 const Text(
                   'Todas as partidas precisam estar finalizadas antes de encerrar a rodada.',
-                  textAlign: TextAlign.center,
+                  textAlign:
+                      TextAlign.center,
                 ),
               ],
             ],
@@ -322,6 +504,9 @@ class _PartidaAdmCard extends StatelessWidget {
 
   String _statusFormatado() {
     switch (partida.status) {
+      case 'aguardando':
+        return 'Aguardando início';
+
       case 'em_andamento':
         return 'Em andamento';
 
@@ -341,6 +526,9 @@ class _PartidaAdmCard extends StatelessWidget {
 
   IconData _iconeStatus() {
     switch (partida.status) {
+      case 'aguardando':
+        return Icons.hourglass_empty;
+
       case 'finalizada':
         return Icons.check_circle;
 
@@ -358,11 +546,13 @@ class _PartidaAdmCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(
+      margin:
+          const EdgeInsets.only(
         bottom: 12,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding:
+            const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment:
               CrossAxisAlignment.start,
@@ -370,18 +560,27 @@ class _PartidaAdmCard extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  child: Text(
-                    '${partida.mesa}',
-                  ),
+                  child: partida.bye
+                      ? const Icon(
+                          Icons.skip_next,
+                        )
+                      : Text(
+                          '${partida.mesa}',
+                        ),
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(
+                  width: 12,
+                ),
 
                 Text(
-                  'Mesa ${partida.mesa}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium,
+                  partida.bye
+                      ? 'BYE'
+                      : 'Mesa ${partida.mesa}',
+                  style:
+                      Theme.of(context)
+                          .textTheme
+                          .titleMedium,
                 ),
 
                 const Spacer(),
@@ -392,75 +591,115 @@ class _PartidaAdmCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    partida.jogador1Nome,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    horizontal: 12,
-                  ),
-                  child: partida.bye
-                      ? const Text(
-                          'BYE',
-                        )
-                      : Text(
-                          '${partida.placarJogador1} x ${partida.placarJogador2}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge,
-                        ),
-                ),
-
-                Expanded(
-                  child: Text(
-                    partida.jogador2Nome ??
-                        '',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(
+              height: 16,
             ),
 
-            const SizedBox(height: 16),
+            if (partida.bye)
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      partida.jogador1Nome,
+                      style:
+                          Theme.of(context)
+                              .textTheme
+                              .titleMedium,
+                      textAlign:
+                          TextAlign.center,
+                    ),
+
+                    const SizedBox(
+                      height: 4,
+                    ),
+
+                    const Text(
+                      'Recebeu BYE nesta rodada',
+                    ),
+                  ],
+                ),
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      partida.jogador1Nome,
+                      textAlign:
+                          TextAlign.center,
+                      style:
+                          const TextStyle(
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(
+                      horizontal: 12,
+                    ),
+                    child: Text(
+                      '${partida.placarJogador1} x ${partida.placarJogador2}',
+                      style:
+                          Theme.of(context)
+                              .textTheme
+                              .titleLarge,
+                    ),
+                  ),
+
+                  Expanded(
+                    child: Text(
+                      partida.jogador2Nome ??
+                          '',
+                      textAlign:
+                          TextAlign.center,
+                      style:
+                          const TextStyle(
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+            const SizedBox(
+              height: 16,
+            ),
 
             Text(
               _statusFormatado(),
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
+              style:
+                  const TextStyle(
+                fontWeight:
+                    FontWeight.w600,
               ),
             ),
 
             if (partida.status ==
                 'contestada') ...[
-              const SizedBox(height: 16),
+              const SizedBox(
+                height: 16,
+              ),
 
               SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
+                width:
+                    double.infinity,
+                child:
+                    ElevatedButton.icon(
                   onPressed: () {
                     _resolverContestacao(
                       context,
                     );
                   },
-                  icon: const Icon(
+                  icon:
+                      const Icon(
                     Icons.gavel,
                   ),
-                  label: const Text(
+                  label:
+                      const Text(
                     'Resolver contestação',
                   ),
                 ),
@@ -499,13 +738,18 @@ class _PartidaAdmCard extends StatelessWidget {
                     '${partida.jogador1Nome} x ${partida.jogador2Nome}',
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(
+                    height: 20,
+                  ),
 
                   DropdownButtonFormField<int>(
                     decoration:
                         InputDecoration(
                       labelText:
-                          partida.jogador1Nome,
+                          partida
+                              .jogador1Nome,
+                      border:
+                          const OutlineInputBorder(),
                     ),
                     items: _valoresPlacar()
                         .map(
@@ -513,7 +757,8 @@ class _PartidaAdmCard extends StatelessWidget {
                               DropdownMenuItem(
                             value: valor,
                             child: Text(
-                              valor.toString(),
+                              valor
+                                  .toString(),
                             ),
                           ),
                         )
@@ -525,13 +770,18 @@ class _PartidaAdmCard extends StatelessWidget {
                     },
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(
+                    height: 12,
+                  ),
 
                   DropdownButtonFormField<int>(
                     decoration:
                         InputDecoration(
                       labelText:
-                          partida.jogador2Nome,
+                          partida
+                              .jogador2Nome,
+                      border:
+                          const OutlineInputBorder(),
                     ),
                     items: _valoresPlacar()
                         .map(
@@ -539,7 +789,8 @@ class _PartidaAdmCard extends StatelessWidget {
                               DropdownMenuItem(
                             value: valor,
                             child: Text(
-                              valor.toString(),
+                              valor
+                                  .toString(),
                             ),
                           ),
                         )
@@ -560,7 +811,8 @@ class _PartidaAdmCard extends StatelessWidget {
                       false,
                     );
                   },
-                  child: const Text(
+                  child:
+                      const Text(
                     'Cancelar',
                   ),
                 ),
@@ -568,7 +820,8 @@ class _PartidaAdmCard extends StatelessWidget {
                 ElevatedButton(
                   onPressed:
                       placar1 == null ||
-                              placar2 == null
+                              placar2 ==
+                                  null
                           ? null
                           : () {
                               Navigator.pop(
@@ -576,7 +829,8 @@ class _PartidaAdmCard extends StatelessWidget {
                                 true,
                               );
                             },
-                  child: const Text(
+                  child:
+                      const Text(
                     'Confirmar resultado',
                   ),
                 ),
@@ -656,21 +910,26 @@ class _ResumoRodada extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding:
+            const EdgeInsets.all(16),
         child: Column(
           children: [
             Text(
               valor,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall,
+              style:
+                  Theme.of(context)
+                      .textTheme
+                      .headlineSmall,
             ),
 
-            const SizedBox(height: 4),
+            const SizedBox(
+              height: 4,
+            ),
 
             Text(
               titulo,
-              textAlign: TextAlign.center,
+              textAlign:
+                  TextAlign.center,
             ),
           ],
         ),
