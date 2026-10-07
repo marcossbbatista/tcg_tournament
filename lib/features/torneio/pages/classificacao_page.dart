@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../jogador/models/jogador_torneio_model.dart';
+import '../models/classificacao_jogador_model.dart';
 import '../../partida/services/rodada_service.dart';
 
 class ClassificacaoPage
@@ -25,7 +25,7 @@ class ClassificacaoPage
 class _ClassificacaoPageState
     extends State<ClassificacaoPage> {
   late Future<
-      List<JogadorTorneioModel>>
+      List<ClassificacaoJogadorModel>>
       _classificacao;
 
   @override
@@ -52,6 +52,12 @@ class _ClassificacaoPageState
     await _classificacao;
   }
 
+  String _formatarPercentual(
+    double valor,
+  ) {
+    return '${(valor * 100).toStringAsFixed(2).replaceAll('.', ',')}%';
+  }
+
   @override
   Widget build(
     BuildContext context,
@@ -65,7 +71,7 @@ class _ClassificacaoPageState
         ),
       ),
       body: FutureBuilder<
-          List<JogadorTorneioModel>>(
+          List<ClassificacaoJogadorModel>>(
         future: _classificacao,
         builder: (
           context,
@@ -81,7 +87,8 @@ class _ClassificacaoPageState
 
           if (snapshot.hasError) {
             return RefreshIndicator(
-              onRefresh: _atualizar,
+              onRefresh:
+                  _atualizar,
               child: ListView(
                 physics:
                     const AlwaysScrollableScrollPhysics(),
@@ -103,12 +110,15 @@ class _ClassificacaoPageState
               snapshot.data ?? [];
 
           return RefreshIndicator(
-            onRefresh: _atualizar,
+            onRefresh:
+                _atualizar,
             child: ListView(
               physics:
                   const AlwaysScrollableScrollPhysics(),
               padding:
-                  const EdgeInsets.all(16),
+                  const EdgeInsets.all(
+                16,
+              ),
               children: [
                 _CabecalhoClassificacao(
                   nomeTorneio:
@@ -117,6 +127,12 @@ class _ClassificacaoPageState
                       widget
                           .classificacaoFinal,
                 ),
+
+                const SizedBox(
+                  height: 16,
+                ),
+
+                const _LegendaClassificacao(),
 
                 const SizedBox(
                   height: 24,
@@ -141,13 +157,16 @@ class _ClassificacaoPageState
                     jogadores.length,
                     (index) {
                       final jogador =
-                          jogadores[index];
+                          jogadores[
+                              index];
 
                       return _JogadorClassificacaoCard(
                         posicao:
                             index + 1,
                         jogador:
                             jogador,
+                        formatarPercentual:
+                            _formatarPercentual,
                       );
                     },
                   ),
@@ -177,7 +196,9 @@ class _CabecalhoClassificacao
     return Card(
       child: Padding(
         padding:
-            const EdgeInsets.all(20),
+            const EdgeInsets.all(
+          20,
+        ),
         child: Column(
           children: [
             Icon(
@@ -217,14 +238,72 @@ class _CabecalhoClassificacao
   }
 }
 
+class _LegendaClassificacao
+    extends StatelessWidget {
+  const _LegendaClassificacao();
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return Card(
+      child: Padding(
+        padding:
+            const EdgeInsets.all(
+          16,
+        ),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Critérios de classificação',
+              style:
+                  Theme.of(context)
+                      .textTheme
+                      .titleMedium,
+            ),
+
+            const SizedBox(
+              height: 12,
+            ),
+
+            const Text(
+              '1. Pontos',
+            ),
+
+            const Text(
+              '2. Op Win %',
+            ),
+
+            const Text(
+              '3. Op Op Win %',
+            ),
+
+            const Text(
+              '4. Confronto direto',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _JogadorClassificacaoCard
     extends StatelessWidget {
   final int posicao;
-  final JogadorTorneioModel jogador;
+
+  final ClassificacaoJogadorModel
+      jogador;
+
+  final String Function(double)
+      formatarPercentual;
 
   const _JogadorClassificacaoCard({
     required this.posicao,
     required this.jogador,
+    required this.formatarPercentual,
   });
 
   IconData? _iconePosicao() {
@@ -253,9 +332,9 @@ class _JogadorClassificacaoCard
     return Card(
       margin:
           const EdgeInsets.only(
-        bottom: 10,
+        bottom: 12,
       ),
-      child: ListTile(
+      child: ExpansionTile(
         leading: CircleAvatar(
           child: icone != null
               ? Icon(
@@ -266,48 +345,169 @@ class _JogadorClassificacaoCard
                   '$posicao',
                 ),
         ),
-        title: Text(
-          jogador.nome,
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                jogador.nome,
+                style:
+                    const TextStyle(
+                  fontWeight:
+                      FontWeight.w600,
+                ),
+              ),
+            ),
+
+            Text(
+              '${jogador.pontos} pts',
+              style:
+                  Theme.of(context)
+                      .textTheme
+                      .titleMedium,
+            ),
+          ],
+        ),
+        subtitle: Padding(
+          padding:
+              const EdgeInsets.only(
+            top: 4,
+          ),
+          child: Text(
+            '${jogador.vitorias}V • '
+            '${jogador.derrotas}D • '
+            '${jogador.empates}E',
+          ),
+        ),
+        children: [
+          const Divider(
+            height: 1,
+          ),
+
+          Padding(
+            padding:
+                const EdgeInsets.all(
+              16,
+            ),
+            child: Column(
+              children: [
+                _LinhaEstatistica(
+                  titulo:
+                      'Retrospecto',
+                  valor:
+                      jogador
+                          .retrospecto,
+                ),
+
+                const SizedBox(
+                  height: 12,
+                ),
+
+                _LinhaEstatistica(
+                  titulo:
+                      'Win %',
+                  valor:
+                      formatarPercentual(
+                    jogador
+                        .winPercentage,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 12,
+                ),
+
+                _LinhaEstatistica(
+                  titulo:
+                      'Op Win %',
+                  valor:
+                      formatarPercentual(
+                    jogador
+                        .opponentWinPercentage,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 12,
+                ),
+
+                _LinhaEstatistica(
+                  titulo:
+                      'Op Op Win %',
+                  valor:
+                      formatarPercentual(
+                    jogador
+                        .opponentOpponentWinPercentage,
+                  ),
+                ),
+
+                if (jogador
+                        .quantidadeByes >
+                    0) ...[
+                  const SizedBox(
+                    height: 12,
+                  ),
+
+                  _LinhaEstatistica(
+                    titulo: 'BYE',
+                    valor:
+                        jogador
+                            .quantidadeByes
+                            .toString(),
+                  ),
+                ],
+
+                const SizedBox(
+                  height: 12,
+                ),
+
+                _LinhaEstatistica(
+                  titulo:
+                      'Status',
+                  valor:
+                      jogador.ativo
+                          ? 'Ativo'
+                          : 'Drop',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LinhaEstatistica
+    extends StatelessWidget {
+  final String titulo;
+  final String valor;
+
+  const _LinhaEstatistica({
+    required this.titulo,
+    required this.valor,
+  });
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            titulo,
+          ),
+        ),
+
+        Text(
+          valor,
           style:
               const TextStyle(
             fontWeight:
                 FontWeight.w600,
           ),
         ),
-        subtitle: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Text(
-              jogador.ativo
-                  ? 'Participante ativo'
-                  : 'Participante inativo',
-            ),
-
-            if (jogador.quantidadeByes >
-                0)
-              Text(
-                'BYE: ${jogador.quantidadeByes}',
-              ),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: [
-            Text(
-              '${jogador.pontos}',
-              style:
-                  Theme.of(context)
-                      .textTheme
-                      .titleLarge,
-            ),
-            const Text(
-              'pts',
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 }
