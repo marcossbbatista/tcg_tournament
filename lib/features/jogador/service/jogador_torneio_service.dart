@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../torneio/models/torneio_model.dart';
 import '../models/jogador_torneio_model.dart';
 import '../models/torneio_jogador_model.dart';
+import 'package:flutter/foundation.dart';
 
 class JogadorTorneioService {
   final FirebaseFirestore _firestore =
@@ -141,78 +142,62 @@ Future<void> recusarJogador({
   );
 }
 
-Stream<List<TorneioJogadorModel>>
-    listarTorneiosDoJogador(
+
+Stream<List<TorneioJogadorModel>> listarTorneiosDoJogador(
   String uid,
-) {
-  return _firestore
-      .collectionGroup('players')
-      .where(
-        'uid',
-        isEqualTo: uid,
-      )
-      .snapshots()
-      .asyncMap(
-        (snapshot) async {
-          final List<TorneioJogadorModel>
-              resultado = [];
+) async* {
+  await for (final snapshot in _firestore
+      .collection('tournaments')
+      .snapshots()) {
+    final List<TorneioJogadorModel> resultado = [];
 
-          for (final jogadorDoc
-              in snapshot.docs) {
-            final torneioRef =
-                jogadorDoc.reference.parent.parent;
+    for (final torneioDoc in snapshot.docs) {
+      try {
+        final jogadorDoc = await torneioDoc.reference
+            .collection('players')
+            .doc(uid)
+            .get();
 
-            if (torneioRef == null) {
-              continue;
-            }
+        if (!jogadorDoc.exists) {
+          continue;
+        }
 
-            final torneioDoc =
-                await torneioRef.get();
+        final dadosJogador = jogadorDoc.data();
 
-            if (!torneioDoc.exists) {
-              continue;
-            }
+        if (dadosJogador == null) {
+          continue;
+        }
 
-            final dadosTorneio =
-                torneioDoc.data();
+        final torneio = TorneioModel.fromMap(
+          torneioDoc.id,
+          torneioDoc.data(),
+        );
 
-            if (dadosTorneio == null) {
-              continue;
-            }
+        resultado.add(
+          TorneioJogadorModel(
+            torneio: torneio,
+            status: dadosJogador['status'] ?? 'pendente',
+            pontos: (dadosJogador['pontos'] as num?)?.toInt() ?? 0,
+            ativo: dadosJogador['ativo'] ?? true,
+          ),
+        );
+      } catch (e, stackTrace) {
+        debugPrint(
+          'Erro ao carregar participação no torneio '
+          '${torneioDoc.id}: $e',
+        );
+        debugPrint('$stackTrace');
+        rethrow;
+      }
+    }
 
-            final dadosJogador =
-                jogadorDoc.data();
+    resultado.sort(
+      (a, b) => a.torneio.dataHora.compareTo(
+        b.torneio.dataHora,
+      ),
+    );
 
-            final torneio =
-                TorneioModel.fromMap(
-              torneioDoc.id,
-              dadosTorneio,
-            );
-
-            resultado.add(
-              TorneioJogadorModel(
-                torneio: torneio,
-                status:
-                    dadosJogador['status'] ??
-                        'pendente',
-                pontos:
-                    dadosJogador['pontos'] ?? 0,
-                ativo:
-                    dadosJogador['ativo'] ??
-                        true,
-              ),
-            );
-          }
-
-          resultado.sort(
-            (a, b) =>
-                a.torneio.dataHora.compareTo(
-              b.torneio.dataHora,
-            ),
-          );
-
-          return resultado;
-        },
-      );
+    yield resultado;
+  }
 }
 }
