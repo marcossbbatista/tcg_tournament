@@ -19,10 +19,15 @@ class AuthService {
     required String email,
     required String senha,
   }) async {
-    return await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: senha,
-    );
+    try {
+      return await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: senha,
+      );
+    } on FirebaseAuthException catch (e) {
+      print('Erro ao fazer login: ${e.code} - ${e.message}');
+      rethrow;
+    }
   }
 
   Future<void> logout() async {

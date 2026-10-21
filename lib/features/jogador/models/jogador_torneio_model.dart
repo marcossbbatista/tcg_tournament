@@ -8,6 +8,7 @@ class JogadorTorneioModel {
   final int pontos;
   final bool ativo;
   final DateTime entrouEm;
+  final int quantidadeByes;
 
   JogadorTorneioModel({
     required this.uid,
@@ -17,6 +18,7 @@ class JogadorTorneioModel {
     required this.pontos,
     required this.ativo,
     required this.entrouEm,
+    this.quantidadeByes = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -28,6 +30,7 @@ class JogadorTorneioModel {
       'pontos': pontos,
       'ativo': ativo,
       'entrouEm': Timestamp.fromDate(entrouEm),
+      'quantidadeByes': quantidadeByes,
     };
   }
 
@@ -45,6 +48,7 @@ class JogadorTorneioModel {
       entrouEm:
           (map['entrouEm'] as Timestamp?)?.toDate() ??
           DateTime.now(),
+      quantidadeByes: map['quantidadeByes'] ?? 0,
     );
   }
 }

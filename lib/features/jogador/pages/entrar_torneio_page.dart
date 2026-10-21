@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
 
 import '../../../core/session/usuario_session.dart';
 import '../../torneio/models/torneio_model.dart';
-import '../services/jogador_torneio_service.dart';
 
 class EntrarTorneioPage extends StatefulWidget {
-  const EntrarTorneioPage({
-    super.key,
-  });
+  const EntrarTorneioPage({super.key});
 
   @override
-  State<EntrarTorneioPage> createState() =>
-      _EntrarTorneioPageState();
+  State<EntrarTorneioPage> createState() => _EntrarTorneioPageState();
 }
 
-class _EntrarTorneioPageState
-    extends State<EntrarTorneioPage> {
-  final TextEditingController _codigoController =
-      TextEditingController();
+class _EntrarTorneioPageState extends State<EntrarTorneioPage> {
+  final TextEditingController _codigoController = TextEditingController();
 
-  final JogadorTorneioService _service =
-      JogadorTorneioService();
+  final JogadorTorneioService _service = JogadorTorneioService();
 
   TorneioModel? _torneio;
 
@@ -35,13 +29,10 @@ class _EntrarTorneioPageState
   }
 
   Future<void> _buscarTorneio() async {
-    final codigo =
-        _codigoController.text.trim();
+    final codigo = _codigoController.text.trim();
 
     if (codigo.isEmpty) {
-      _mostrarMensagem(
-        'Informe o código do torneio.',
-      );
+      _mostrarMensagem('Informe o código do torneio.');
 
       return;
     }
@@ -52,17 +43,12 @@ class _EntrarTorneioPageState
     });
 
     try {
-      final torneio =
-          await _service.buscarTorneioPorCodigo(
-        codigo,
-      );
+      final torneio = await _service.buscarTorneioPorCodigo(codigo);
 
       if (!mounted) return;
 
       if (torneio == null) {
-        _mostrarMensagem(
-          'Torneio não encontrado.',
-        );
+        _mostrarMensagem('Torneio não encontrado.');
 
         return;
       }
@@ -73,9 +59,7 @@ class _EntrarTorneioPageState
     } catch (e) {
       if (!mounted) return;
 
-      _mostrarMensagem(
-        'Não foi possível localizar o torneio.',
-      );
+      _mostrarMensagem('Não foi possível localizar o torneio.');
     } finally {
       if (mounted) {
         setState(() {
@@ -92,9 +76,7 @@ class _EntrarTorneioPageState
     if (torneio == null) return;
 
     if (usuario == null) {
-      _mostrarMensagem(
-        'Usuário não identificado.',
-      );
+      _mostrarMensagem('Usuário não identificado.');
 
       return;
     }
@@ -104,8 +86,7 @@ class _EntrarTorneioPageState
     });
 
     try {
-      final resultado =
-          await _service.solicitarParticipacao(
+      final resultado = await _service.solicitarParticipacao(
         torneio: torneio,
         uid: usuario.uid,
         nome: usuario.nome,
@@ -120,50 +101,34 @@ class _EntrarTorneioPageState
             'Solicitação enviada. Aguarde a aprovação do organizador.',
           );
 
-          Navigator.pop(
-            context,
-            true,
-          );
+          Navigator.pop(context, true);
 
           break;
 
         case 'aprovado':
-          _mostrarMensagem(
-            'Você já está aprovado neste torneio.',
-          );
+          _mostrarMensagem('Você já está aprovado neste torneio.');
 
-          Navigator.pop(
-            context,
-            true,
-          );
+          Navigator.pop(context, true);
 
           break;
 
         case 'recusado':
-          _mostrarMensagem(
-            'Sua inscrição neste torneio foi recusada.',
-          );
+          _mostrarMensagem('Sua inscrição neste torneio foi recusada.');
 
           break;
 
         case 'inscricoes_encerradas':
-          _mostrarMensagem(
-            'As inscrições deste torneio estão encerradas.',
-          );
+          _mostrarMensagem('As inscrições deste torneio estão encerradas.');
 
           break;
 
         default:
-          _mostrarMensagem(
-            'Você já possui uma inscrição neste torneio.',
-          );
+          _mostrarMensagem('Você já possui uma inscrição neste torneio.');
       }
     } catch (e) {
       if (!mounted) return;
 
-      _mostrarMensagem(
-        'Não foi possível solicitar a participação.',
-      );
+      _mostrarMensagem('Não foi possível solicitar a participação.');
     } finally {
       if (mounted) {
         setState(() {
@@ -173,32 +138,21 @@ class _EntrarTorneioPageState
     }
   }
 
-  void _mostrarMensagem(
-    String mensagem,
-  ) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensagem),
-      ),
-    );
+  void _mostrarMensagem(String mensagem) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
-  String _formatarData(
-    DateTime data,
-  ) {
-    final dia =
-        data.day.toString().padLeft(2, '0');
+  String _formatarData(DateTime data) {
+    final dia = data.day.toString().padLeft(2, '0');
 
-    final mes =
-        data.month.toString().padLeft(2, '0');
+    final mes = data.month.toString().padLeft(2, '0');
 
     final ano = data.year;
 
-    final hora =
-        data.hour.toString().padLeft(2, '0');
+    final hora = data.hour.toString().padLeft(2, '0');
 
-    final minuto =
-        data.minute.toString().padLeft(2, '0');
+    final minuto = data.minute.toString().padLeft(2, '0');
 
     return '$dia/$mes/$ano às $hora:$minuto';
   }
@@ -206,41 +160,30 @@ class _EntrarTorneioPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Entrar em torneio',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Entrar em torneio')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               'Código do torneio',
-              style:
-                  Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
 
             const SizedBox(height: 8),
 
-            const Text(
-              'Informe o código fornecido pelo organizador.',
-            ),
+            const Text('Informe o código fornecido pelo organizador.'),
 
             const SizedBox(height: 16),
 
             TextField(
               controller: _codigoController,
-              textCapitalization:
-                  TextCapitalization.characters,
+              textCapitalization: TextCapitalization.characters,
               decoration: const InputDecoration(
                 labelText: 'Ex.: TCG4387',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(
-                  Icons.key,
-                ),
+                prefixIcon: Icon(Icons.key),
               ),
               onSubmitted: (_) {
                 _buscarTorneio();
@@ -250,23 +193,15 @@ class _EntrarTorneioPageState
             const SizedBox(height: 16),
 
             ElevatedButton.icon(
-              onPressed:
-                  _buscando ? null : _buscarTorneio,
+              onPressed: _buscando ? null : _buscarTorneio,
               icon: _buscando
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child:
-                          CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(
-                      Icons.search,
-                    ),
-              label: const Text(
-                'Buscar torneio',
-              ),
+                  : const Icon(Icons.search),
+              label: const Text('Buscar torneio'),
             ),
 
             if (_torneio != null) ...[
@@ -274,13 +209,9 @@ class _EntrarTorneioPageState
 
               _TorneioEncontradoCard(
                 torneio: _torneio!,
-                dataFormatada:
-                    _formatarData(
-                  _torneio!.dataHora,
-                ),
+                dataFormatada: _formatarData(_torneio!.dataHora),
                 solicitando: _solicitando,
-                onParticipar:
-                    _solicitarParticipacao,
+                onParticipar: _solicitarParticipacao,
               ),
             ],
           ],
@@ -290,8 +221,7 @@ class _EntrarTorneioPageState
   }
 }
 
-class _TorneioEncontradoCard
-    extends StatelessWidget {
+class _TorneioEncontradoCard extends StatelessWidget {
   final TorneioModel torneio;
   final String dataFormatada;
   final bool solicitando;
@@ -310,30 +240,19 @@ class _TorneioEncontradoCard
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              torneio.nome,
-              style:
-                  Theme.of(context).textTheme.titleLarge,
-            ),
+            Text(torneio.nome, style: Theme.of(context).textTheme.titleLarge),
 
             const SizedBox(height: 16),
 
             Row(
               children: [
-                const Icon(
-                  Icons.calendar_month,
-                ),
+                const Icon(Icons.calendar_month),
 
                 const SizedBox(width: 8),
 
-                Expanded(
-                  child: Text(
-                    dataFormatada,
-                  ),
-                ),
+                Expanded(child: Text(dataFormatada)),
               ],
             ),
 
@@ -341,21 +260,15 @@ class _TorneioEncontradoCard
 
             Row(
               children: [
-                const Icon(
-                  Icons.sports_esports,
-                ),
+                const Icon(Icons.sports_esports),
 
                 const SizedBox(width: 8),
 
-                Text(
-                  torneio.formato.toUpperCase(),
-                ),
+                Text(torneio.formato.toUpperCase()),
 
                 const SizedBox(width: 16),
 
-                Text(
-                  '${torneio.quantidadeRodadas} rodadas',
-                ),
+                Text('${torneio.quantidadeRodadas} rodadas'),
               ],
             ),
 
@@ -363,17 +276,13 @@ class _TorneioEncontradoCard
 
             Row(
               children: [
-                const Icon(
-                  Icons.key,
-                ),
+                const Icon(Icons.key),
 
                 const SizedBox(width: 8),
 
                 Text(
                   torneio.codigo,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -381,23 +290,15 @@ class _TorneioEncontradoCard
             const SizedBox(height: 24),
 
             ElevatedButton.icon(
-              onPressed:
-                  solicitando ? null : onParticipar,
+              onPressed: solicitando ? null : onParticipar,
               icon: solicitando
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child:
-                          CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(
-                      Icons.person_add,
-                    ),
-              label: const Text(
-                'Solicitar participação',
-              ),
+                  : const Icon(Icons.person_add),
+              label: const Text('Solicitar participação'),
             ),
           ],
         ),

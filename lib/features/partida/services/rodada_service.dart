@@ -6,43 +6,24 @@ import '../../torneio/models/classificacao_jogador_model.dart';
 import '../models/partida_model.dart';
 
 class RodadaService {
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<String> iniciarTorneio({
-    required String torneioId,
-  }) async {
-    final torneioRef =
-        _firestore
-            .collection('tournaments')
-            .doc(torneioId);
+  Future<String> iniciarTorneio({required String torneioId}) async {
+    final torneioRef = _firestore.collection('tournaments').doc(torneioId);
 
-    final jogadoresSnapshot =
-        await torneioRef
-            .collection('players')
-            .where(
-              'status',
-              isEqualTo: 'aprovado',
-            )
-            .where(
-              'ativo',
-              isEqualTo: true,
-            )
-            .get();
+    final jogadoresSnapshot = await torneioRef
+        .collection('players')
+        .where('status', isEqualTo: 'aprovado')
+        .where('ativo', isEqualTo: true)
+        .get();
 
     if (jogadoresSnapshot.docs.length < 2) {
       return 'jogadores_insuficientes';
     }
 
-    await torneioRef.update({
-      'status': 'em_andamento',
-      'rodadaAtual': 1,
-    });
+    await torneioRef.update({'status': 'em_andamento', 'rodadaAtual': 1});
 
-    final rodadaRef =
-        torneioRef
-            .collection('rounds')
-            .doc('1');
+    final rodadaRef = torneioRef.collection('rounds').doc('1');
 
     await rodadaRef.set({
       'numero': 1,
@@ -53,40 +34,22 @@ class RodadaService {
     return 'ok';
   }
 
-  Future<List<JogadorTorneioModel>>
-      listarJogadoresAprovados(
+  Future<List<JogadorTorneioModel>> listarJogadoresAprovados(
     String torneioId,
   ) async {
-    final snapshot =
-        await _firestore
-            .collection('tournaments')
-            .doc(torneioId)
-            .collection('players')
-            .where(
-              'status',
-              isEqualTo: 'aprovado',
-            )
-            .where(
-              'ativo',
-              isEqualTo: true,
-            )
-            .get();
+    final snapshot = await _firestore
+        .collection('tournaments')
+        .doc(torneioId)
+        .collection('players')
+        .where('status', isEqualTo: 'aprovado')
+        .where('ativo', isEqualTo: true)
+        .get();
 
-    final jogadores =
-        snapshot.docs
-            .map(
-              (doc) =>
-                  JogadorTorneioModel.fromMap(
-                doc.id,
-                doc.data(),
-              ),
-            )
-            .toList();
+    final jogadores = snapshot.docs
+        .map((doc) => JogadorTorneioModel.fromMap(doc.id, doc.data()))
+        .toList();
 
-    jogadores.sort(
-      (a, b) =>
-          a.nome.compareTo(b.nome),
-    );
+    jogadores.sort((a, b) => a.nome.compareTo(b.nome));
 
     return jogadores;
   }
@@ -95,47 +58,32 @@ class RodadaService {
     required String torneioId,
     required List<PartidaModel> partidas,
   }) async {
-    final rodadaRef =
-        _firestore
-            .collection('tournaments')
-            .doc(torneioId)
-            .collection('rounds')
-            .doc('1');
+    final rodadaRef = _firestore
+        .collection('tournaments')
+        .doc(torneioId)
+        .collection('rounds')
+        .doc('1');
 
-    final partidasAtuais =
-        await rodadaRef
-            .collection('matches')
-            .get();
+    final partidasAtuais = await rodadaRef.collection('matches').get();
 
-    final batch =
-        _firestore.batch();
+    final batch = _firestore.batch();
 
-    for (final doc
-        in partidasAtuais.docs) {
-      batch.delete(
-        doc.reference,
-      );
+    for (final doc in partidasAtuais.docs) {
+      batch.delete(doc.reference);
     }
 
     for (final partida in partidas) {
-      final partidaRef =
-          rodadaRef
-              .collection('matches')
-              .doc();
+      final partidaRef = rodadaRef.collection('matches').doc();
 
       batch.set(
         partidaRef,
         PartidaModel(
           id: partidaRef.id,
           mesa: partida.mesa,
-          jogador1Uid:
-              partida.jogador1Uid,
-          jogador1Nome:
-              partida.jogador1Nome,
-          jogador2Uid:
-              partida.jogador2Uid,
-          jogador2Nome:
-              partida.jogador2Nome,
+          jogador1Uid: partida.jogador1Uid,
+          jogador1Nome: partida.jogador1Nome,
+          jogador2Uid: partida.jogador2Uid,
+          jogador2Nome: partida.jogador2Nome,
           status: 'aguardando',
           placarJogador1: 0,
           placarJogador2: 0,
@@ -145,12 +93,7 @@ class RodadaService {
       );
     }
 
-    batch.update(
-      rodadaRef,
-      {
-        'status': 'configuracao',
-      },
-    );
+    batch.update(rodadaRef, {'status': 'configuracao'});
 
     await batch.commit();
   }
@@ -165,40 +108,34 @@ class RodadaService {
         .collection('rounds')
         .doc(rodada.toString())
         .snapshots()
-        .map(
-          (doc) {
-            if (!doc.exists) {
-              return null;
-            }
+        .map((doc) {
+          if (!doc.exists) {
+            return null;
+          }
 
-            return doc.data()?['status'];
-          },
-        );
+          return doc.data()?['status'];
+        });
   }
 
   Future<String> iniciarRodada({
     required String torneioId,
     required int rodada,
   }) async {
-    final rodadaRef =
-        _firestore
-            .collection('tournaments')
-            .doc(torneioId)
-            .collection('rounds')
-            .doc(rodada.toString());
+    final rodadaRef = _firestore
+        .collection('tournaments')
+        .doc(torneioId)
+        .collection('rounds')
+        .doc(rodada.toString());
 
-    final rodadaSnapshot =
-        await rodadaRef.get();
+    final rodadaSnapshot = await rodadaRef.get();
 
     if (!rodadaSnapshot.exists) {
       return 'rodada_nao_encontrada';
     }
 
-    final dadosRodada =
-        rodadaSnapshot.data();
+    final dadosRodada = rodadaSnapshot.data();
 
-    final status =
-        dadosRodada?['status'];
+    final status = dadosRodada?['status'];
 
     if (status == 'em_andamento') {
       return 'rodada_ja_iniciada';
@@ -212,47 +149,31 @@ class RodadaService {
       return 'status_invalido';
     }
 
-    final partidasSnapshot =
-        await rodadaRef
-            .collection('matches')
-            .get();
+    final partidasSnapshot = await rodadaRef.collection('matches').get();
 
     if (partidasSnapshot.docs.isEmpty) {
       return 'nenhuma_partida';
     }
 
-    final batch =
-        _firestore.batch();
+    final batch = _firestore.batch();
 
-    for (final doc
-        in partidasSnapshot.docs) {
-      final dados =
-          doc.data();
+    for (final doc in partidasSnapshot.docs) {
+      final dados = doc.data();
 
-      final bool bye =
-          dados['bye'] ?? false;
+      final bool bye = dados['bye'] ?? false;
 
-      batch.update(
-        doc.reference,
-        {
-          'status':
-              bye
-                  ? 'finalizada'
-                  : 'em_andamento',
-          'placarJogador1': 0,
-          'placarJogador2': 0,
-          'resultadoInformadoPor': null,
-        },
-      );
+      batch.update(doc.reference, {
+        'status': bye ? 'finalizada' : 'em_andamento',
+        'placarJogador1': 0,
+        'placarJogador2': 0,
+        'resultadoInformadoPor': null,
+      });
     }
 
-    batch.update(
-      rodadaRef,
-      {
-        'status': 'em_andamento',
-        'iniciadaEm': Timestamp.now(),
-      },
-    );
+    batch.update(rodadaRef, {
+      'status': 'em_andamento',
+      'iniciadaEm': Timestamp.now(),
+    });
 
     await batch.commit();
 
@@ -263,336 +184,199 @@ class RodadaService {
     required String torneioId,
     required int rodada,
   }) async {
-    final torneioRef =
-        _firestore
-            .collection('tournaments')
-            .doc(torneioId);
+    final torneioRef = _firestore.collection('tournaments').doc(torneioId);
 
-    final rodadaRef =
-        torneioRef
-            .collection('rounds')
-            .doc(rodada.toString());
+    final rodadaRef = torneioRef.collection('rounds').doc(rodada.toString());
 
-    final partidasSnapshot =
-        await rodadaRef
-            .collection('matches')
-            .get();
+    final partidasSnapshot = await rodadaRef.collection('matches').get();
 
     if (partidasSnapshot.docs.isEmpty) {
       return 'nenhuma_partida';
     }
 
-    final partidasRefs =
-        partidasSnapshot.docs
-            .map(
-              (doc) => doc.reference,
-            )
-            .toList();
+    final partidasRefs = partidasSnapshot.docs
+        .map((doc) => doc.reference)
+        .toList();
 
-    return _firestore
-        .runTransaction<String>(
-      (transaction) async {
-        final rodadaSnapshot =
-            await transaction.get(
-          rodadaRef,
-        );
+    return _firestore.runTransaction<String>((transaction) async {
+      final rodadaSnapshot = await transaction.get(rodadaRef);
 
-        if (!rodadaSnapshot.exists) {
-          return 'rodada_nao_encontrada';
+      if (!rodadaSnapshot.exists) {
+        return 'rodada_nao_encontrada';
+      }
+
+      final dadosRodada = rodadaSnapshot.data();
+
+      if (dadosRodada?['status'] == 'finalizada') {
+        return 'rodada_finalizada';
+      }
+
+      final List<PartidaModel> partidas = [];
+
+      for (final partidaRef in partidasRefs) {
+        final partidaSnapshot = await transaction.get(partidaRef);
+
+        if (!partidaSnapshot.exists) {
+          continue;
         }
 
-        final dadosRodada =
-            rodadaSnapshot.data();
+        final dados = partidaSnapshot.data();
 
-        if (dadosRodada?['status'] ==
-            'finalizada') {
-          return 'rodada_finalizada';
+        if (dados == null) {
+          continue;
         }
 
-        final List<PartidaModel>
-            partidas = [];
+        partidas.add(PartidaModel.fromMap(partidaSnapshot.id, dados));
+      }
 
-        for (final partidaRef
-            in partidasRefs) {
-          final partidaSnapshot =
-              await transaction.get(
-            partidaRef,
-          );
+      if (partidas.isEmpty) {
+        return 'nenhuma_partida';
+      }
 
-          if (!partidaSnapshot.exists) {
-            continue;
-          }
+      final possuiPartidaPendente = partidas.any(
+        (partida) => partida.status != 'finalizada',
+      );
 
-          final dados =
-              partidaSnapshot.data();
+      if (possuiPartidaPendente) {
+        return 'partida_pendente';
+      }
 
-          if (dados == null) {
-            continue;
-          }
+      final Map<String, int> pontosPorJogador = {};
 
-          partidas.add(
-            PartidaModel.fromMap(
-              partidaSnapshot.id,
-              dados,
-            ),
-          );
+      final Set<String> jogadoresComBye = {};
+
+      for (final partida in partidas) {
+        if (partida.bye) {
+          pontosPorJogador[partida.jogador1Uid] =
+              (pontosPorJogador[partida.jogador1Uid] ?? 0) + 3;
+
+          jogadoresComBye.add(partida.jogador1Uid);
+
+          continue;
         }
 
-        if (partidas.isEmpty) {
-          return 'nenhuma_partida';
+        final jogador2Uid = partida.jogador2Uid;
+
+        if (jogador2Uid == null) {
+          continue;
         }
 
-        final possuiPartidaPendente =
-            partidas.any(
-          (partida) =>
-              partida.status !=
-              'finalizada',
-        );
+        if (partida.placarJogador1 > partida.placarJogador2) {
+          pontosPorJogador[partida.jogador1Uid] =
+              (pontosPorJogador[partida.jogador1Uid] ?? 0) + 3;
 
-        if (possuiPartidaPendente) {
-          return 'partida_pendente';
+          pontosPorJogador.putIfAbsent(jogador2Uid, () => 0);
+        } else if (partida.placarJogador2 > partida.placarJogador1) {
+          pontosPorJogador[jogador2Uid] =
+              (pontosPorJogador[jogador2Uid] ?? 0) + 3;
+
+          pontosPorJogador.putIfAbsent(partida.jogador1Uid, () => 0);
+        } else {
+          pontosPorJogador[partida.jogador1Uid] =
+              (pontosPorJogador[partida.jogador1Uid] ?? 0) + 1;
+
+          pontosPorJogador[jogador2Uid] =
+              (pontosPorJogador[jogador2Uid] ?? 0) + 1;
+        }
+      }
+
+      for (final entry in pontosPorJogador.entries) {
+        final jogadorRef = torneioRef.collection('players').doc(entry.key);
+
+        final jogadorSnapshot = await transaction.get(jogadorRef);
+
+        if (!jogadorSnapshot.exists) {
+          continue;
         }
 
-        final Map<String, int>
-            pontosPorJogador = {};
+        final dadosJogador = jogadorSnapshot.data();
 
-        final Set<String>
-            jogadoresComBye = {};
+        final pontosAtuais = dadosJogador?['pontos'] ?? 0;
 
-        for (final partida in partidas) {
-          if (partida.bye) {
-            pontosPorJogador[
-                    partida
-                        .jogador1Uid] =
-                (pontosPorJogador[
-                            partida
-                                .jogador1Uid] ??
-                        0) +
-                    3;
+        final quantidadeByesAtual = dadosJogador?['quantidadeByes'] ?? 0;
 
-            jogadoresComBye.add(
-              partida.jogador1Uid,
-            );
+        transaction.update(jogadorRef, {
+          'pontos': pontosAtuais + entry.value,
+          if (jogadoresComBye.contains(entry.key))
+            'quantidadeByes': quantidadeByesAtual + 1,
+        });
+      }
 
-            continue;
-          }
+      transaction.update(rodadaRef, {
+        'status': 'finalizada',
+        'finalizadaEm': Timestamp.now(),
+      });
 
-          final jogador2Uid =
-              partida.jogador2Uid;
-
-          if (jogador2Uid == null) {
-            continue;
-          }
-
-          if (partida.placarJogador1 >
-              partida.placarJogador2) {
-            pontosPorJogador[
-                    partida
-                        .jogador1Uid] =
-                (pontosPorJogador[
-                            partida
-                                .jogador1Uid] ??
-                        0) +
-                    3;
-
-            pontosPorJogador.putIfAbsent(
-              jogador2Uid,
-              () => 0,
-            );
-          } else if (partida
-                  .placarJogador2 >
-              partida.placarJogador1) {
-            pontosPorJogador[
-                    jogador2Uid] =
-                (pontosPorJogador[
-                            jogador2Uid] ??
-                        0) +
-                    3;
-
-            pontosPorJogador.putIfAbsent(
-              partida.jogador1Uid,
-              () => 0,
-            );
-          } else {
-            pontosPorJogador[
-                    partida
-                        .jogador1Uid] =
-                (pontosPorJogador[
-                            partida
-                                .jogador1Uid] ??
-                        0) +
-                    1;
-
-            pontosPorJogador[
-                    jogador2Uid] =
-                (pontosPorJogador[
-                            jogador2Uid] ??
-                        0) +
-                    1;
-          }
-        }
-
-        for (final entry
-            in pontosPorJogador.entries) {
-          final jogadorRef =
-              torneioRef
-                  .collection('players')
-                  .doc(entry.key);
-
-          final jogadorSnapshot =
-              await transaction.get(
-            jogadorRef,
-          );
-
-          if (!jogadorSnapshot.exists) {
-            continue;
-          }
-
-          final dadosJogador =
-              jogadorSnapshot.data();
-
-          final pontosAtuais =
-              dadosJogador?['pontos'] ?? 0;
-
-          final quantidadeByesAtual =
-              dadosJogador?[
-                      'quantidadeByes'] ??
-                  0;
-
-          transaction.update(
-            jogadorRef,
-            {
-              'pontos':
-                  pontosAtuais +
-                  entry.value,
-              if (jogadoresComBye
-                  .contains(entry.key))
-                'quantidadeByes':
-                    quantidadeByesAtual +
-                    1,
-            },
-          );
-        }
-
-        transaction.update(
-          rodadaRef,
-          {
-            'status': 'finalizada',
-            'finalizadaEm':
-                Timestamp.now(),
-          },
-        );
-
-        return 'ok';
-      },
-    );
+      return 'ok';
+    });
   }
 
-  Future<List<ClassificacaoJogadorModel>>
-      buscarClassificacao({
+  Future<List<ClassificacaoJogadorModel>> buscarClassificacao({
     required String torneioId,
   }) async {
-    final torneioRef =
-        _firestore
-            .collection('tournaments')
-            .doc(torneioId);
+    final torneioRef = _firestore.collection('tournaments').doc(torneioId);
 
-    final torneioSnapshot =
-        await torneioRef.get();
+    final torneioSnapshot = await torneioRef.get();
 
     if (!torneioSnapshot.exists) {
       return [];
     }
 
-    final dadosTorneio =
-        torneioSnapshot.data();
+    final dadosTorneio = torneioSnapshot.data();
 
     if (dadosTorneio == null) {
       return [];
     }
 
-    final rodadaAtual =
-        dadosTorneio['rodadaAtual'] ?? 0;
+    final rodadaAtual = dadosTorneio['rodadaAtual'] ?? 0;
 
-    final jogadoresSnapshot =
-        await torneioRef
-            .collection('players')
-            .where(
-              'status',
-              isEqualTo: 'aprovado',
-            )
-            .get();
+    final jogadoresSnapshot = await torneioRef
+        .collection('players')
+        .where('status', isEqualTo: 'aprovado')
+        .get();
 
-    final Map<String, _EstatisticaJogador>
-        estatisticas = {};
+    final Map<String, _EstatisticaJogador> estatisticas = {};
 
-    for (final doc
-        in jogadoresSnapshot.docs) {
-      final jogador =
-          JogadorTorneioModel.fromMap(
-        doc.id,
-        doc.data(),
-      );
+    for (final doc in jogadoresSnapshot.docs) {
+      final jogador = JogadorTorneioModel.fromMap(doc.id, doc.data());
 
-      estatisticas[jogador.uid] =
-          _EstatisticaJogador(
+      estatisticas[jogador.uid] = _EstatisticaJogador(
         uid: jogador.uid,
         nome: jogador.nome,
         ativo: jogador.ativo,
-        quantidadeByes:
-            jogador.quantidadeByes,
+        quantidadeByes: jogador.quantidadeByes,
       );
     }
 
-    final Map<String, Map<String, int>>
-        confrontoDireto = {};
+    final Map<String, Map<String, int>> confrontoDireto = {};
 
-    for (int numeroRodada = 1;
-        numeroRodada <= rodadaAtual;
-        numeroRodada++) {
-      final rodadaRef =
-          torneioRef
-              .collection('rounds')
-              .doc(
-                numeroRodada.toString(),
-              );
+    for (int numeroRodada = 1; numeroRodada <= rodadaAtual; numeroRodada++) {
+      final rodadaRef = torneioRef
+          .collection('rounds')
+          .doc(numeroRodada.toString());
 
-      final rodadaSnapshot =
-          await rodadaRef.get();
+      final rodadaSnapshot = await rodadaRef.get();
 
       if (!rodadaSnapshot.exists) {
         continue;
       }
 
-      final dadosRodada =
-          rodadaSnapshot.data();
+      final dadosRodada = rodadaSnapshot.data();
 
-      if (dadosRodada?['status'] !=
-          'finalizada') {
+      if (dadosRodada?['status'] != 'finalizada') {
         continue;
       }
 
-      final partidasSnapshot =
-          await rodadaRef
-              .collection('matches')
-              .get();
+      final partidasSnapshot = await rodadaRef.collection('matches').get();
 
-      for (final doc
-          in partidasSnapshot.docs) {
-        final partida =
-            PartidaModel.fromMap(
-          doc.id,
-          doc.data(),
-        );
+      for (final doc in partidasSnapshot.docs) {
+        final partida = PartidaModel.fromMap(doc.id, doc.data());
 
-        if (partida.status !=
-            'finalizada') {
+        if (partida.status != 'finalizada') {
           continue;
         }
 
-        final jogador1 =
-            estatisticas[
-                partida.jogador1Uid];
+        final jogador1 = estatisticas[partida.jogador1Uid];
 
         if (jogador1 == null) {
           continue;
@@ -605,73 +389,45 @@ class RodadaService {
           continue;
         }
 
-        final jogador2Uid =
-            partida.jogador2Uid;
+        final jogador2Uid = partida.jogador2Uid;
 
         if (jogador2Uid == null) {
           continue;
         }
 
-        final jogador2 =
-            estatisticas[
-                jogador2Uid];
+        final jogador2 = estatisticas[jogador2Uid];
 
         if (jogador2 == null) {
           continue;
         }
 
-        jogador1
-            .adversarios
-            .add(
-              jogador2.uid,
-            );
+        jogador1.adversarios.add(jogador2.uid);
 
-        jogador2
-            .adversarios
-            .add(
-              jogador1.uid,
-            );
+        jogador2.adversarios.add(jogador1.uid);
 
         jogador1.partidasConsideradas++;
         jogador2.partidasConsideradas++;
 
-        if (partida.placarJogador1 >
-            partida.placarJogador2) {
+        if (partida.placarJogador1 > partida.placarJogador2) {
           jogador1.vitorias++;
           jogador2.derrotas++;
 
           jogador1.pontos += 3;
 
-          confrontoDireto
-              .putIfAbsent(
-                jogador1.uid,
-                () => {},
-              )[jogador2.uid] = 1;
+          confrontoDireto.putIfAbsent(jogador1.uid, () => {})[jogador2.uid] = 1;
 
-          confrontoDireto
-              .putIfAbsent(
-                jogador2.uid,
-                () => {},
-              )[jogador1.uid] = -1;
-        } else if (partida
-                .placarJogador2 >
-            partida.placarJogador1) {
+          confrontoDireto.putIfAbsent(jogador2.uid, () => {})[jogador1.uid] =
+              -1;
+        } else if (partida.placarJogador2 > partida.placarJogador1) {
           jogador2.vitorias++;
           jogador1.derrotas++;
 
           jogador2.pontos += 3;
 
-          confrontoDireto
-              .putIfAbsent(
-                jogador2.uid,
-                () => {},
-              )[jogador1.uid] = 1;
+          confrontoDireto.putIfAbsent(jogador2.uid, () => {})[jogador1.uid] = 1;
 
-          confrontoDireto
-              .putIfAbsent(
-                jogador1.uid,
-                () => {},
-              )[jogador2.uid] = -1;
+          confrontoDireto.putIfAbsent(jogador1.uid, () => {})[jogador2.uid] =
+              -1;
         } else {
           jogador1.empates++;
           jogador2.empates++;
@@ -679,17 +435,9 @@ class RodadaService {
           jogador1.pontos++;
           jogador2.pontos++;
 
-          confrontoDireto
-              .putIfAbsent(
-                jogador1.uid,
-                () => {},
-              )[jogador2.uid] = 0;
+          confrontoDireto.putIfAbsent(jogador1.uid, () => {})[jogador2.uid] = 0;
 
-          confrontoDireto
-              .putIfAbsent(
-                jogador2.uid,
-                () => {},
-              )[jogador1.uid] = 0;
+          confrontoDireto.putIfAbsent(jogador2.uid, () => {})[jogador1.uid] = 0;
         }
       }
     }
@@ -698,17 +446,11 @@ class RodadaService {
     // Primeiro calculamos o Win Percentage
     // de cada jogador.
     //
-    for (final estatistica
-        in estatisticas.values) {
-      estatistica.winPercentage =
-          _calcularWinPercentage(
-        vitorias:
-            estatistica.vitorias,
-        partidasConsideradas:
-            estatistica
-                .partidasConsideradas,
-        ativo:
-            estatistica.ativo,
+    for (final estatistica in estatisticas.values) {
+      estatistica.winPercentage = _calcularWinPercentage(
+        vitorias: estatistica.vitorias,
+        partidasConsideradas: estatistica.partidasConsideradas,
+        ativo: estatistica.ativo,
       );
     }
 
@@ -716,13 +458,9 @@ class RodadaService {
     // Depois calculamos o Opponents'
     // Win Percentage.
     //
-    for (final estatistica
-        in estatisticas.values) {
-      if (estatistica
-          .adversarios.isEmpty) {
-        estatistica
-                .opponentWinPercentage =
-            0;
+    for (final estatistica in estatisticas.values) {
+      if (estatistica.adversarios.isEmpty) {
+        estatistica.opponentWinPercentage = 0;
 
         continue;
       }
@@ -730,40 +468,30 @@ class RodadaService {
       double total = 0;
       int quantidade = 0;
 
-      for (final adversarioUid
-          in estatistica.adversarios) {
-        final adversario =
-            estatisticas[
-                adversarioUid];
+      for (final adversarioUid in estatistica.adversarios) {
+        final adversario = estatisticas[adversarioUid];
 
         if (adversario == null) {
           continue;
         }
 
-        total +=
-            adversario.winPercentage;
+        total += adversario.winPercentage;
 
         quantidade++;
       }
 
-      estatistica
-              .opponentWinPercentage =
-          quantidade == 0
-              ? 0
-              : total / quantidade;
+      estatistica.opponentWinPercentage = quantidade == 0
+          ? 0
+          : total / quantidade;
     }
 
     //
     // Depois calculamos o Opponents'
     // Opponents' Win Percentage.
     //
-    for (final estatistica
-        in estatisticas.values) {
-      if (estatistica
-          .adversarios.isEmpty) {
-        estatistica
-                .opponentOpponentWinPercentage =
-            0;
+    for (final estatistica in estatisticas.values) {
+      if (estatistica.adversarios.isEmpty) {
+        estatistica.opponentOpponentWinPercentage = 0;
 
         continue;
       }
@@ -771,62 +499,41 @@ class RodadaService {
       double total = 0;
       int quantidade = 0;
 
-      for (final adversarioUid
-          in estatistica.adversarios) {
-        final adversario =
-            estatisticas[
-                adversarioUid];
+      for (final adversarioUid in estatistica.adversarios) {
+        final adversario = estatisticas[adversarioUid];
 
         if (adversario == null) {
           continue;
         }
 
-        total += adversario
-            .opponentWinPercentage;
+        total += adversario.opponentWinPercentage;
 
         quantidade++;
       }
 
-      estatistica
-              .opponentOpponentWinPercentage =
-          quantidade == 0
-              ? 0
-              : total / quantidade;
+      estatistica.opponentOpponentWinPercentage = quantidade == 0
+          ? 0
+          : total / quantidade;
     }
 
-    final classificacao =
-        estatisticas.values
-            .map(
-              (estatistica) =>
-                  ClassificacaoJogadorModel(
-                uid:
-                    estatistica.uid,
-                nome:
-                    estatistica.nome,
-                pontos:
-                    estatistica.pontos,
-                vitorias:
-                    estatistica.vitorias,
-                derrotas:
-                    estatistica.derrotas,
-                empates:
-                    estatistica.empates,
-                winPercentage:
-                    estatistica
-                        .winPercentage,
-                opponentWinPercentage:
-                    estatistica
-                        .opponentWinPercentage,
-                opponentOpponentWinPercentage:
-                    estatistica
-                        .opponentOpponentWinPercentage,
-                ativo:
-                    estatistica.ativo,
-                quantidadeByes:
-                    estatistica.byes,
-              ),
-            )
-            .toList();
+    final classificacao = estatisticas.values
+        .map(
+          (estatistica) => ClassificacaoJogadorModel(
+            uid: estatistica.uid,
+            nome: estatistica.nome,
+            pontos: estatistica.pontos,
+            vitorias: estatistica.vitorias,
+            derrotas: estatistica.derrotas,
+            empates: estatistica.empates,
+            winPercentage: estatistica.winPercentage,
+            opponentWinPercentage: estatistica.opponentWinPercentage,
+            opponentOpponentWinPercentage:
+                estatistica.opponentOpponentWinPercentage,
+            ativo: estatistica.ativo,
+            quantidadeByes: estatistica.byes,
+          ),
+        )
+        .toList();
 
     //
     // Primeira ordenação:
@@ -835,40 +542,29 @@ class RodadaService {
     // 2. Op Win %
     // 3. Op Op Win %
     //
-    classificacao.sort(
-      (a, b) {
-        final pontos =
-            b.pontos.compareTo(
-          a.pontos,
-        );
+    classificacao.sort((a, b) {
+      final pontos = b.pontos.compareTo(a.pontos);
 
-        if (pontos != 0) {
-          return pontos;
-        }
+      if (pontos != 0) {
+        return pontos;
+      }
 
-        final opWin =
-            b.opponentWinPercentage
-                .compareTo(
-          a.opponentWinPercentage,
-        );
+      final opWin = b.opponentWinPercentage.compareTo(a.opponentWinPercentage);
 
-        if (opWin != 0) {
-          return opWin;
-        }
+      if (opWin != 0) {
+        return opWin;
+      }
 
-        final opOpWin =
-            b.opponentOpponentWinPercentage
-                .compareTo(
-          a.opponentOpponentWinPercentage,
-        );
+      final opOpWin = b.opponentOpponentWinPercentage.compareTo(
+        a.opponentOpponentWinPercentage,
+      );
 
-        if (opOpWin != 0) {
-          return opOpWin;
-        }
+      if (opOpWin != 0) {
+        return opOpWin;
+      }
 
-        return 0;
-      },
-    );
+      return 0;
+    });
 
     //
     // Agora tratamos grupos que continuam
@@ -876,61 +572,32 @@ class RodadaService {
     //
     int inicio = 0;
 
-    while (inicio <
-        classificacao.length) {
-      int fim =
-          inicio + 1;
+    while (inicio < classificacao.length) {
+      int fim = inicio + 1;
 
-      while (fim <
-              classificacao.length &&
-          _mesmosDesempates(
-            classificacao[inicio],
-            classificacao[fim],
-          )) {
+      while (fim < classificacao.length &&
+          _mesmosDesempates(classificacao[inicio], classificacao[fim])) {
         fim++;
       }
 
-      final quantidadeEmpatados =
-          fim - inicio;
+      final quantidadeEmpatados = fim - inicio;
 
       if (quantidadeEmpatados == 2) {
-        final jogador1 =
-            classificacao[inicio];
+        final jogador1 = classificacao[inicio];
 
-        final jogador2 =
-            classificacao[
-                inicio + 1];
+        final jogador2 = classificacao[inicio + 1];
 
-        final resultadoConfronto =
-            confrontoDireto[
-                    jogador1.uid]
-                ?[jogador2.uid];
+        final resultadoConfronto = confrontoDireto[jogador1.uid]?[jogador2.uid];
 
-        if (resultadoConfronto ==
-            -1) {
-          classificacao[inicio] =
-              jogador2;
+        if (resultadoConfronto == -1) {
+          classificacao[inicio] = jogador2;
 
-          classificacao[
-              inicio + 1] = jogador1;
-        } else if (resultadoConfronto ==
-                null ||
-            resultadoConfronto == 0) {
-          _ordenarFallback(
-            classificacao,
-            inicio,
-            fim,
-            torneioId,
-          );
+          classificacao[inicio + 1] = jogador1;
+        } else if (resultadoConfronto == null || resultadoConfronto == 0) {
+          _ordenarFallback(classificacao, inicio, fim, torneioId);
         }
-      } else if (quantidadeEmpatados >
-          1) {
-        _ordenarFallback(
-          classificacao,
-          inicio,
-          fim,
-          torneioId,
-        );
+      } else if (quantidadeEmpatados > 1) {
+        _ordenarFallback(classificacao, inicio, fim, torneioId);
       }
 
       inicio = fim;
@@ -951,9 +618,7 @@ class RodadaService {
       return 0.25;
     }
 
-    double percentual =
-        vitorias /
-        partidasConsideradas;
+    double percentual = vitorias / partidasConsideradas;
 
     //
     // Play! Pokémon:
@@ -970,8 +635,7 @@ class RodadaService {
     // No nosso sistema usamos ativo = false
     // para representar drop/desistência.
     //
-    if (!ativo &&
-        percentual > 0.75) {
+    if (!ativo && percentual > 0.75) {
       percentual = 0.75;
     }
 
@@ -979,8 +643,7 @@ class RodadaService {
     // Jogador que segue no torneio:
     // máximo 100%.
     //
-    if (ativo &&
-        percentual > 1) {
+    if (ativo && percentual > 1) {
       percentual = 1;
     }
 
@@ -991,33 +654,23 @@ class RodadaService {
     ClassificacaoJogadorModel a,
     ClassificacaoJogadorModel b,
   ) {
-    const tolerancia =
-        0.0000001;
+    const tolerancia = 0.0000001;
 
     return a.pontos == b.pontos &&
-        (a.opponentWinPercentage -
-                    b.opponentWinPercentage)
-                .abs() <
+        (a.opponentWinPercentage - b.opponentWinPercentage).abs() <
             tolerancia &&
-        (a.opponentOpponentWinPercentage -
-                    b.opponentOpponentWinPercentage)
+        (a.opponentOpponentWinPercentage - b.opponentOpponentWinPercentage)
                 .abs() <
             tolerancia;
   }
 
   void _ordenarFallback(
-    List<ClassificacaoJogadorModel>
-        classificacao,
+    List<ClassificacaoJogadorModel> classificacao,
     int inicio,
     int fim,
     String torneioId,
   ) {
-    final grupo =
-        classificacao
-            .sublist(
-              inicio,
-              fim,
-            );
+    final grupo = classificacao.sublist(inicio, fim);
 
     //
     // O regulamento prevê ordem aleatória
@@ -1028,102 +681,58 @@ class RodadaService {
     // uma ordem pseudoaleatória estável baseada
     // no torneio + UID do jogador.
     //
-    grupo.sort(
-      (a, b) {
-        final valorA =
-            _valorDesempateAleatorio(
-          '$torneioId:${a.uid}',
-        );
+    grupo.sort((a, b) {
+      final valorA = _valorDesempateAleatorio('$torneioId:${a.uid}');
 
-        final valorB =
-            _valorDesempateAleatorio(
-          '$torneioId:${b.uid}',
-        );
+      final valorB = _valorDesempateAleatorio('$torneioId:${b.uid}');
 
-        return valorA.compareTo(
-          valorB,
-        );
-      },
-    );
+      return valorA.compareTo(valorB);
+    });
 
-    for (int i = 0;
-        i < grupo.length;
-        i++) {
-      classificacao[
-          inicio + i] = grupo[i];
+    for (int i = 0; i < grupo.length; i++) {
+      classificacao[inicio + i] = grupo[i];
     }
   }
 
-  int _valorDesempateAleatorio(
-    String valor,
-  ) {
+  int _valorDesempateAleatorio(String valor) {
     int hash = 17;
 
-    for (final codigo
-        in valor.codeUnits) {
-      hash =
-          (hash * 31 + codigo) &
-          0x7fffffff;
+    for (final codigo in valor.codeUnits) {
+      hash = (hash * 31 + codigo) & 0x7fffffff;
     }
 
     return hash;
   }
 
-  Future<Map<String, Set<String>>>
-      _buscarHistoricoConfrontos({
+  Future<Map<String, Set<String>>> _buscarHistoricoConfrontos({
     required String torneioId,
     required int rodadaAtual,
   }) async {
-    final Map<String, Set<String>>
-        historico = {};
+    final Map<String, Set<String>> historico = {};
 
-    final torneioRef =
-        _firestore
-            .collection('tournaments')
-            .doc(torneioId);
+    final torneioRef = _firestore.collection('tournaments').doc(torneioId);
 
-    for (int numeroRodada = 1;
-        numeroRodada <= rodadaAtual;
-        numeroRodada++) {
-      final partidasSnapshot =
-          await torneioRef
-              .collection('rounds')
-              .doc(
-                numeroRodada.toString(),
-              )
-              .collection('matches')
-              .get();
+    for (int numeroRodada = 1; numeroRodada <= rodadaAtual; numeroRodada++) {
+      final partidasSnapshot = await torneioRef
+          .collection('rounds')
+          .doc(numeroRodada.toString())
+          .collection('matches')
+          .get();
 
-      for (final doc
-          in partidasSnapshot.docs) {
-        final partida =
-            PartidaModel.fromMap(
-          doc.id,
-          doc.data(),
-        );
+      for (final doc in partidasSnapshot.docs) {
+        final partida = PartidaModel.fromMap(doc.id, doc.data());
 
-        if (partida.bye ||
-            partida.jogador2Uid == null) {
+        if (partida.bye || partida.jogador2Uid == null) {
           continue;
         }
 
         historico
-            .putIfAbsent(
-              partida.jogador1Uid,
-              () => <String>{},
-            )
-            .add(
-              partida.jogador2Uid!,
-            );
+            .putIfAbsent(partida.jogador1Uid, () => <String>{})
+            .add(partida.jogador2Uid!);
 
         historico
-            .putIfAbsent(
-              partida.jogador2Uid!,
-              () => <String>{},
-            )
-            .add(
-              partida.jogador1Uid,
-            );
+            .putIfAbsent(partida.jogador2Uid!, () => <String>{})
+            .add(partida.jogador1Uid);
       }
     }
 
@@ -1134,67 +743,47 @@ class RodadaService {
     required String torneioId,
     required int rodadaAtual,
   }) async {
-    final torneioRef =
-        _firestore
-            .collection('tournaments')
-            .doc(torneioId);
+    final torneioRef = _firestore.collection('tournaments').doc(torneioId);
 
-    final torneioSnapshot =
-        await torneioRef.get();
+    final torneioSnapshot = await torneioRef.get();
 
     if (!torneioSnapshot.exists) {
       return 'torneio_nao_encontrado';
     }
 
-    final dadosTorneio =
-        torneioSnapshot.data();
+    final dadosTorneio = torneioSnapshot.data();
 
     if (dadosTorneio == null) {
       return 'torneio_nao_encontrado';
     }
 
-    final quantidadeRodadas =
-        dadosTorneio[
-                'quantidadeRodadas'] ??
-            0;
+    final quantidadeRodadas = dadosTorneio['quantidadeRodadas'] ?? 0;
 
-    if (rodadaAtual >=
-        quantidadeRodadas) {
+    if (rodadaAtual >= quantidadeRodadas) {
       return 'ultima_rodada';
     }
 
-    final rodadaAtualRef =
-        torneioRef
-            .collection('rounds')
-            .doc(
-              rodadaAtual.toString(),
-            );
+    final rodadaAtualRef = torneioRef
+        .collection('rounds')
+        .doc(rodadaAtual.toString());
 
-    final rodadaAtualSnapshot =
-        await rodadaAtualRef.get();
+    final rodadaAtualSnapshot = await rodadaAtualRef.get();
 
     if (!rodadaAtualSnapshot.exists) {
       return 'rodada_nao_encontrada';
     }
 
-    if (rodadaAtualSnapshot
-            .data()?['status'] !=
-        'finalizada') {
+    if (rodadaAtualSnapshot.data()?['status'] != 'finalizada') {
       return 'rodada_nao_finalizada';
     }
 
-    final proximaRodada =
-        rodadaAtual + 1;
+    final proximaRodada = rodadaAtual + 1;
 
-    final proximaRodadaRef =
-        torneioRef
-            .collection('rounds')
-            .doc(
-              proximaRodada.toString(),
-            );
+    final proximaRodadaRef = torneioRef
+        .collection('rounds')
+        .doc(proximaRodada.toString());
 
-    final proximaRodadaSnapshot =
-        await proximaRodadaRef.get();
+    final proximaRodadaSnapshot = await proximaRodadaRef.get();
 
     if (proximaRodadaSnapshot.exists) {
       return 'rodada_ja_existe';
@@ -1204,31 +793,22 @@ class RodadaService {
     // Aqui a geração Swiss passa a usar
     // a nova classificação oficial.
     //
-    final classificacao =
-        await buscarClassificacao(
-      torneioId: torneioId,
-    );
+    final classificacao = await buscarClassificacao(torneioId: torneioId);
 
-    final jogadoresAtivos =
-        classificacao
-            .where(
-              (jogador) =>
-                  jogador.ativo,
-            )
-            .toList();
+    final jogadoresAtivos = classificacao
+        .where((jogador) => jogador.ativo)
+        .toList();
 
     if (jogadoresAtivos.length < 2) {
       return 'jogadores_insuficientes';
     }
 
-    final historico =
-        await _buscarHistoricoConfrontos(
+    final historico = await _buscarHistoricoConfrontos(
       torneioId: torneioId,
       rodadaAtual: rodadaAtual,
     );
 
-    ClassificacaoJogadorModel?
-        jogadorBye;
+    ClassificacaoJogadorModel? jogadorBye;
 
     if (jogadoresAtivos.length.isOdd) {
       //
@@ -1236,43 +816,25 @@ class RodadaService {
       // procurando alguém que ainda não
       // recebeu BYE.
       //
-      for (int i =
-              jogadoresAtivos.length -
-                  1;
-          i >= 0;
-          i--) {
-        if (jogadoresAtivos[i]
-                .quantidadeByes ==
-            0) {
-          jogadorBye =
-              jogadoresAtivos[i];
+      for (int i = jogadoresAtivos.length - 1; i >= 0; i--) {
+        if (jogadoresAtivos[i].quantidadeByes == 0) {
+          jogadorBye = jogadoresAtivos[i];
 
           break;
         }
       }
 
-      jogadorBye ??=
-          jogadoresAtivos.last;
+      jogadorBye ??= jogadoresAtivos.last;
 
-      jogadoresAtivos.removeWhere(
-        (jogador) =>
-            jogador.uid ==
-            jogadorBye!.uid,
-      );
+      jogadoresAtivos.removeWhere((jogador) => jogador.uid == jogadorBye!.uid);
     }
 
-    final restantes =
-        List<ClassificacaoJogadorModel>
-            .from(
-      jogadoresAtivos,
-    );
+    final restantes = List<ClassificacaoJogadorModel>.from(jogadoresAtivos);
 
-    final List<_Pareamento>
-        pareamentos = [];
+    final List<_Pareamento> pareamentos = [];
 
     while (restantes.length >= 2) {
-      final jogador1 =
-          restantes.removeAt(0);
+      final jogador1 = restantes.removeAt(0);
 
       int adversarioIndex = -1;
 
@@ -1282,18 +844,11 @@ class RodadaService {
       // o primeiro adversário ainda
       // não enfrentado.
       //
-      for (int i = 0;
-          i < restantes.length;
-          i++) {
-        final candidato =
-            restantes[i];
+      for (int i = 0; i < restantes.length; i++) {
+        final candidato = restantes[i];
 
         final jaJogaram =
-            historico[jogador1.uid]
-                    ?.contains(
-                      candidato.uid,
-                    ) ??
-                false;
+            historico[jogador1.uid]?.contains(candidato.uid) ?? false;
 
         if (!jaJogaram) {
           adversarioIndex = i;
@@ -1310,55 +865,33 @@ class RodadaService {
         adversarioIndex = 0;
       }
 
-      final jogador2 =
-          restantes.removeAt(
-        adversarioIndex,
-      );
+      final jogador2 = restantes.removeAt(adversarioIndex);
 
-      pareamentos.add(
-        _Pareamento(
-          jogador1: jogador1,
-          jogador2: jogador2,
-        ),
-      );
+      pareamentos.add(_Pareamento(jogador1: jogador1, jogador2: jogador2));
     }
 
-    final batch =
-        _firestore.batch();
+    final batch = _firestore.batch();
 
-    batch.set(
-      proximaRodadaRef,
-      {
-        'numero': proximaRodada,
-        'status': 'configuracao',
-        'criadaEm': Timestamp.now(),
-      },
-    );
+    batch.set(proximaRodadaRef, {
+      'numero': proximaRodada,
+      'status': 'configuracao',
+      'criadaEm': Timestamp.now(),
+    });
 
-    for (int i = 0;
-        i < pareamentos.length;
-        i++) {
-      final pareamento =
-          pareamentos[i];
+    for (int i = 0; i < pareamentos.length; i++) {
+      final pareamento = pareamentos[i];
 
-      final partidaRef =
-          proximaRodadaRef
-              .collection('matches')
-              .doc();
+      final partidaRef = proximaRodadaRef.collection('matches').doc();
 
       batch.set(
         partidaRef,
         PartidaModel(
           id: partidaRef.id,
           mesa: i + 1,
-          jogador1Uid:
-              pareamento.jogador1.uid,
-          jogador1Nome:
-              pareamento.jogador1.nome,
-          jogador2Uid:
-              pareamento.jogador2.uid,
-          jogador2Nome:
-              pareamento.jogador2.nome,
+          jogador1Uid: pareamento.jogador1.uid,
+          jogador1Nome: pareamento.jogador1.nome,
+          jogador2Uid: pareamento.jogador2.uid,
+          jogador2Nome: pareamento.jogador2.nome,
           status: 'aguardando',
           placarJogador1: 0,
           placarJogador2: 0,
@@ -1369,21 +902,15 @@ class RodadaService {
     }
 
     if (jogadorBye != null) {
-      final partidaByeRef =
-          proximaRodadaRef
-              .collection('matches')
-              .doc();
+      final partidaByeRef = proximaRodadaRef.collection('matches').doc();
 
       batch.set(
         partidaByeRef,
         PartidaModel(
           id: partidaByeRef.id,
-          mesa:
-              pareamentos.length + 1,
-          jogador1Uid:
-              jogadorBye.uid,
-          jogador1Nome:
-              jogadorBye.nome,
+          mesa: pareamentos.length + 1,
+          jogador1Uid: jogadorBye.uid,
+          jogador1Nome: jogadorBye.nome,
           jogador2Uid: null,
           jogador2Nome: null,
           status: 'aguardando',
@@ -1395,13 +922,7 @@ class RodadaService {
       );
     }
 
-    batch.update(
-      torneioRef,
-      {
-        'rodadaAtual':
-            proximaRodada,
-      },
-    );
+    batch.update(torneioRef, {'rodadaAtual': proximaRodada});
 
     await batch.commit();
 
@@ -1413,68 +934,42 @@ class RodadaService {
     required int rodada,
     required List<PartidaModel> novasPartidas,
   }) async {
-    final torneioRef =
-        _firestore
-            .collection('tournaments')
-            .doc(torneioId);
+    final torneioRef = _firestore.collection('tournaments').doc(torneioId);
 
-    final rodadaRef =
-        torneioRef
-            .collection('rounds')
-            .doc(rodada.toString());
+    final rodadaRef = torneioRef.collection('rounds').doc(rodada.toString());
 
-    final rodadaSnapshot =
-        await rodadaRef.get();
+    final rodadaSnapshot = await rodadaRef.get();
 
     if (!rodadaSnapshot.exists) {
       return 'rodada_nao_encontrada';
     }
 
-    final statusRodada =
-        rodadaSnapshot
-            .data()?['status'];
+    final statusRodada = rodadaSnapshot.data()?['status'];
 
-    if (statusRodada ==
-        'finalizada') {
+    if (statusRodada == 'finalizada') {
       return 'rodada_finalizada';
     }
 
-    final jogadoresSnapshot =
-        await torneioRef
-            .collection('players')
-            .where(
-              'status',
-              isEqualTo: 'aprovado',
-            )
-            .where(
-              'ativo',
-              isEqualTo: true,
-            )
-            .get();
+    final jogadoresSnapshot = await torneioRef
+        .collection('players')
+        .where('status', isEqualTo: 'aprovado')
+        .where('ativo', isEqualTo: true)
+        .get();
 
-    final jogadoresValidos =
-        jogadoresSnapshot.docs
-            .map(
-              (doc) => doc.id,
-            )
-            .toSet();
+    final jogadoresValidos = jogadoresSnapshot.docs
+        .map((doc) => doc.id)
+        .toSet();
 
-    final jogadoresUtilizados =
-        <String>{};
+    final jogadoresUtilizados = <String>{};
 
     int quantidadeByes = 0;
 
-    for (final partida
-        in novasPartidas) {
-      if (!jogadoresValidos.contains(
-        partida.jogador1Uid,
-      )) {
+    for (final partida in novasPartidas) {
+      if (!jogadoresValidos.contains(partida.jogador1Uid)) {
         return 'jogador_invalido';
       }
 
-      if (!jogadoresUtilizados.add(
-        partida.jogador1Uid,
-      )) {
+      if (!jogadoresUtilizados.add(partida.jogador1Uid)) {
         return 'jogador_duplicado';
       }
 
@@ -1484,89 +979,55 @@ class RodadaService {
         continue;
       }
 
-      final jogador2Uid =
-          partida.jogador2Uid;
+      final jogador2Uid = partida.jogador2Uid;
 
-      if (jogador2Uid == null ||
-          jogador2Uid.isEmpty) {
+      if (jogador2Uid == null || jogador2Uid.isEmpty) {
         return 'jogador_invalido';
       }
 
-      if (jogador2Uid ==
-          partida.jogador1Uid) {
+      if (jogador2Uid == partida.jogador1Uid) {
         return 'mesmo_jogador';
       }
 
-      if (!jogadoresValidos.contains(
-        jogador2Uid,
-      )) {
+      if (!jogadoresValidos.contains(jogador2Uid)) {
         return 'jogador_invalido';
       }
 
-      if (!jogadoresUtilizados.add(
-        jogador2Uid,
-      )) {
+      if (!jogadoresUtilizados.add(jogador2Uid)) {
         return 'jogador_duplicado';
       }
     }
 
-    if (jogadoresUtilizados.length !=
-        jogadoresValidos.length) {
+    if (jogadoresUtilizados.length != jogadoresValidos.length) {
       return 'jogadores_sem_partida';
     }
 
-    if (jogadoresValidos.length.isEven &&
-        quantidadeByes > 0) {
+    if (jogadoresValidos.length.isEven && quantidadeByes > 0) {
       return 'bye_invalido';
     }
 
-    if (jogadoresValidos.length.isOdd &&
-        quantidadeByes != 1) {
+    if (jogadoresValidos.length.isOdd && quantidadeByes != 1) {
       return 'bye_obrigatorio';
     }
 
-    final partidasAtuaisSnapshot =
-        await rodadaRef
-            .collection('matches')
-            .get();
+    final partidasAtuaisSnapshot = await rodadaRef.collection('matches').get();
 
-    final partidasAtuais =
-        partidasAtuaisSnapshot.docs
-            .map(
-              (doc) =>
-                  PartidaModel.fromMap(
-                doc.id,
-                doc.data(),
-              ),
-            )
-            .toList();
+    final partidasAtuais = partidasAtuaisSnapshot.docs
+        .map((doc) => PartidaModel.fromMap(doc.id, doc.data()))
+        .toList();
 
-    final batch =
-        _firestore.batch();
+    final batch = _firestore.batch();
 
-    for (final documento
-        in partidasAtuaisSnapshot.docs) {
-      batch.delete(
-        documento.reference,
-      );
+    for (final documento in partidasAtuaisSnapshot.docs) {
+      batch.delete(documento.reference);
     }
 
-    for (int i = 0;
-        i < novasPartidas.length;
-        i++) {
-      final novaPartida =
-          novasPartidas[i];
+    for (int i = 0; i < novasPartidas.length; i++) {
+      final novaPartida = novasPartidas[i];
 
-      final partidaAnterior =
-          _buscarPartidaIgual(
-        partidasAtuais,
-        novaPartida,
-      );
+      final partidaAnterior = _buscarPartidaIgual(partidasAtuais, novaPartida);
 
-      final partidaRef =
-          rodadaRef
-              .collection('matches')
-              .doc();
+      final partidaRef = rodadaRef.collection('matches').doc();
 
       if (partidaAnterior != null) {
         batch.set(
@@ -1574,31 +1035,15 @@ class RodadaService {
           PartidaModel(
             id: partidaRef.id,
             mesa: i + 1,
-            jogador1Uid:
-                partidaAnterior
-                    .jogador1Uid,
-            jogador1Nome:
-                partidaAnterior
-                    .jogador1Nome,
-            jogador2Uid:
-                partidaAnterior
-                    .jogador2Uid,
-            jogador2Nome:
-                partidaAnterior
-                    .jogador2Nome,
-            status:
-                partidaAnterior.status,
-            placarJogador1:
-                partidaAnterior
-                    .placarJogador1,
-            placarJogador2:
-                partidaAnterior
-                    .placarJogador2,
-            resultadoInformadoPor:
-                partidaAnterior
-                    .resultadoInformadoPor,
-            bye:
-                partidaAnterior.bye,
+            jogador1Uid: partidaAnterior.jogador1Uid,
+            jogador1Nome: partidaAnterior.jogador1Nome,
+            jogador2Uid: partidaAnterior.jogador2Uid,
+            jogador2Nome: partidaAnterior.jogador2Nome,
+            status: partidaAnterior.status,
+            placarJogador1: partidaAnterior.placarJogador1,
+            placarJogador2: partidaAnterior.placarJogador2,
+            resultadoInformadoPor: partidaAnterior.resultadoInformadoPor,
+            bye: partidaAnterior.bye,
           ).toMap(),
         );
       } else {
@@ -1607,25 +1052,15 @@ class RodadaService {
           PartidaModel(
             id: partidaRef.id,
             mesa: i + 1,
-            jogador1Uid:
-                novaPartida
-                    .jogador1Uid,
-            jogador1Nome:
-                novaPartida
-                    .jogador1Nome,
-            jogador2Uid:
-                novaPartida
-                    .jogador2Uid,
-            jogador2Nome:
-                novaPartida
-                    .jogador2Nome,
-            status:
-                statusRodada ==
-                        'configuracao'
-                    ? 'aguardando'
-                    : novaPartida.bye
-                        ? 'finalizada'
-                        : 'em_andamento',
+            jogador1Uid: novaPartida.jogador1Uid,
+            jogador1Nome: novaPartida.jogador1Nome,
+            jogador2Uid: novaPartida.jogador2Uid,
+            jogador2Nome: novaPartida.jogador2Nome,
+            status: statusRodada == 'configuracao'
+                ? 'aguardando'
+                : novaPartida.bye
+                ? 'finalizada'
+                : 'em_andamento',
             placarJogador1: 0,
             placarJogador2: 0,
             resultadoInformadoPor: null,
@@ -1646,27 +1081,16 @@ class RodadaService {
   ) {
     for (final partida in partidas) {
       final mesmaOrdem =
-          partida.jogador1Uid ==
-                  novaPartida
-                      .jogador1Uid &&
-              partida.jogador2Uid ==
-                  novaPartida
-                      .jogador2Uid;
+          partida.jogador1Uid == novaPartida.jogador1Uid &&
+          partida.jogador2Uid == novaPartida.jogador2Uid;
 
       final ordemInvertida =
           !partida.bye &&
-              !novaPartida.bye &&
-              partida.jogador1Uid ==
-                  novaPartida
-                      .jogador2Uid &&
-              partida.jogador2Uid ==
-                  novaPartida
-                      .jogador1Uid;
+          !novaPartida.bye &&
+          partida.jogador1Uid == novaPartida.jogador2Uid &&
+          partida.jogador2Uid == novaPartida.jogador1Uid;
 
-      if ((mesmaOrdem ||
-              ordemInvertida) &&
-          partida.bye ==
-              novaPartida.bye) {
+      if ((mesmaOrdem || ordemInvertida) && partida.bye == novaPartida.bye) {
         return partida;
       }
     }
@@ -1710,8 +1134,5 @@ class _Pareamento {
   final ClassificacaoJogadorModel jogador1;
   final ClassificacaoJogadorModel jogador2;
 
-  _Pareamento({
-    required this.jogador1,
-    required this.jogador2,
-  });
+  _Pareamento({required this.jogador1, required this.jogador2});
 }
