@@ -199,6 +199,7 @@ class RodadaService {
         .toList();
 
     return _firestore.runTransaction<String>((transaction) async {
+      // 1. Ler a rodada
       final rodadaSnapshot = await transaction.get(rodadaRef);
 
       if (!rodadaSnapshot.exists) {
@@ -211,6 +212,7 @@ class RodadaService {
         return 'rodada_finalizada';
       }
 
+      // 2. Ler todas as partidas
       final List<PartidaModel> partidas = [];
 
       for (final partidaRef in partidasRefs) {
@@ -233,6 +235,7 @@ class RodadaService {
         return 'nenhuma_partida';
       }
 
+      // 3. Validar se todas as partidas foram finalizadas
       final possuiPartidaPendente = partidas.any(
         (partida) => partida.status != 'finalizada',
       );
@@ -241,8 +244,8 @@ class RodadaService {
         return 'partida_pendente';
       }
 
+      // 4. Calcular os pontos de cada jogador
       final Map<String, int> pontosPorJogador = {};
-
       final Set<String> jogadoresComBye = {};
 
       for (final partida in partidas) {
@@ -280,20 +283,35 @@ class RodadaService {
         }
       }
 
-      for (final entry in pontosPorJogador.entries) {
-        final jogadorRef = torneioRef.collection('players').doc(entry.key);
+      // 5. Preparar as referências dos jogadores
+      final jogadoresRefs = <String, DocumentReference<Map<String, dynamic>>>{};
 
-        final jogadorSnapshot = await transaction.get(jogadorRef);
+      for (final uid in pontosPorJogador.keys) {
+        jogadoresRefs[uid] = torneioRef.collection('players').doc(uid);
+      }
+
+      // 6. Ler todos os jogadores ANTES de iniciar as escritas
+      final jogadoresSnapshots =
+          <String, DocumentSnapshot<Map<String, dynamic>>>{};
+
+      for (final entry in jogadoresRefs.entries) {
+        jogadoresSnapshots[entry.key] = await transaction.get(entry.value);
+      }
+
+      // 7. Atualizar os pontos e a quantidade de BYEs
+      // Neste ponto, todas as leituras já foram realizadas.
+      for (final entry in pontosPorJogador.entries) {
+        final jogadorRef = jogadoresRefs[entry.key]!;
+        final jogadorSnapshot = jogadoresSnapshots[entry.key]!;
 
         if (!jogadorSnapshot.exists) {
           continue;
         }
 
-        final dadosJogador = jogadorSnapshot.data();
+        final dadosJogador = jogadorSnapshot.data()!;
 
-        final pontosAtuais = dadosJogador?['pontos'] ?? 0;
-
-        final quantidadeByesAtual = dadosJogador?['quantidadeByes'] ?? 0;
+        final pontosAtuais = dadosJogador['pontos'] ?? 0;
+        final quantidadeByesAtual = dadosJogador['quantidadeByes'] ?? 0;
 
         transaction.update(jogadorRef, {
           'pontos': pontosAtuais + entry.value,
@@ -302,6 +320,7 @@ class RodadaService {
         });
       }
 
+      // 8. Finalizar a rodada
       transaction.update(rodadaRef, {
         'status': 'finalizada',
         'finalizadaEm': Timestamp.now(),
