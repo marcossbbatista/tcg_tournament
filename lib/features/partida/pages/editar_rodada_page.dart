@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../jogador/models/jogador_torneio_model.dart';
@@ -621,18 +622,18 @@ class _EditarRodadaPageState
   @override
   Widget build(BuildContext context) {
     if (_carregando) {
-      return const Scaffold(
+      return TcgTheme.wrap(const Scaffold(
         body: Center(
           child:
               CircularProgressIndicator(),
         ),
-      );
+      ));
     }
 
     final disponiveis =
         _jogadoresDisponiveis();
 
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(
         title: Text(
           'Editar Rodada ${widget.rodada}',
@@ -642,6 +643,7 @@ class _EditarRodadaPageState
         padding:
             const EdgeInsets.all(16),
         children: [
+          TcgHero(title: widget.nomeTorneio, subtitle: 'Organize confrontos e distribua os jogadores.', icon: Icons.edit_calendar_rounded),
           Text(
             widget.nomeTorneio,
             style:
@@ -869,7 +871,7 @@ class _EditarRodadaPageState
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

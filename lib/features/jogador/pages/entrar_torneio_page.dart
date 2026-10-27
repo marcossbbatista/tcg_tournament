@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
 
@@ -159,13 +160,14 @@ class _EntrarTorneioPageState extends State<EntrarTorneioPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(title: const Text('Entrar em torneio')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const TcgHero(title: 'Entrar em torneio', subtitle: 'Digite o código compartilhado pelo organizador.', icon: Icons.confirmation_number_rounded),
             Text(
               'Código do torneio',
               style: Theme.of(context).textTheme.titleLarge,
@@ -217,7 +219,7 @@ class _EntrarTorneioPageState extends State<EntrarTorneioPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 

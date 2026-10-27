@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
 
@@ -95,7 +96,7 @@ class GerenciarJogadoresPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final JogadorTorneioService service = JogadorTorneioService();
 
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(title: const Text('Gerenciar jogadores')),
       body: StreamBuilder<List<JogadorTorneioModel>>(
         stream: service.listarJogadores(torneioId),
@@ -173,7 +174,7 @@ class GerenciarJogadoresPage extends StatelessWidget {
           );
         },
       ),
-    );
+    ));
   }
 }
 

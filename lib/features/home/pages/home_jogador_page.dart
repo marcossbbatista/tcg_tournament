@@ -1,10 +1,10 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:tcg_tournament/features/jogador/models/torneio_jogador_model.dart';
 import 'package:tcg_tournament/features/jogador/pages/entrar_torneio_page.dart';
 import 'package:tcg_tournament/features/jogador/pages/torneio_jogador_page.dart';
 import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
-import 'package:tcg_tournament/features/jogador/widgets/torneio_jogador_card.dart';
 
 import '../../../core/session/usuario_session.dart';
 import '../../auth/pages/login_page.dart';
@@ -93,14 +93,14 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
     final usuario = UsuarioSession.usuario;
 
     if (usuario == null) {
-      return const Scaffold(
+      return TcgTheme.wrap(const Scaffold(
         body: Center(
           child: Text('Usuário não identificado.'),
         ),
-      );
+      ));
     }
 
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(
         title: const Text('Meus torneios'),
         actions: [
@@ -121,15 +121,8 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Olá, ${usuario.nome}',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Acompanhe seus torneios e partidas.',
-            ),
-            const SizedBox(height: 24),
+            TcgHero(title: 'Olá, ${usuario.nome}', subtitle: 'Acompanhe seus torneios e partidas.', icon: Icons.style_rounded),
+            const SizedBox(height: 4),
             Expanded(
               child: StreamBuilder<List<TorneioJogadorModel>>(
                 stream: _torneiosStream,
@@ -179,9 +172,13 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
                     itemBuilder: (context, index) {
                       final item = torneios[index];
 
-                      return TorneioJogadorCard(
-                        item: item,
-                        onAbrir: () => _abrirTorneio(item),
+                      return TcgTournamentTile(
+                        nome: item.torneio.nome,
+                        data: item.torneio.dataHora,
+                        formato: item.torneio.formato,
+                        status: item.status,
+                        pontos: item.pontos,
+                        onTap: () => _abrirTorneio(item),
                       );
                     },
                   );
@@ -196,6 +193,6 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
         icon: const Icon(Icons.add),
         label: const Text('Entrar em torneio'),
       ),
-    );
+    ));
   }
 }

@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../auth/pages/login_page.dart';
@@ -5,7 +6,6 @@ import '../../auth/services/auth_service.dart';
 import '../../torneio/models/torneio_model.dart';
 import '../../torneio/pages/criar_torneio_page.dart';
 import '../../torneio/services/torneio_service.dart';
-import '../../torneio/widgets/torneio_card.dart';
 import '../../../core/session/usuario_session.dart';
 import '../../torneio/pages/gerenciar_torneio_page.dart';
 
@@ -58,19 +58,19 @@ Future<void> _gerenciarTorneio(
     final usuario = UsuarioSession.usuario;
 
     if (usuario == null) {
-      return const Scaffold(
+      return TcgTheme.wrap(const Scaffold(
         body: Center(
           child: Text(
             'Usuário não identificado.',
           ),
         ),
-      );
+      ));
     }
 
     final TorneioService torneioService =
         TorneioService();
 
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(
         title: const Text(
           'Meus torneios',
@@ -91,20 +91,8 @@ Future<void> _gerenciarTorneio(
           crossAxisAlignment:
               CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Olá, ${usuario.nome}',
-              style:
-                  Theme.of(context).textTheme.headlineSmall,
-            ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Gerencie seus torneios e acompanhe as partidas.',
-            ),
-
-            const SizedBox(height: 24),
-
+            TcgHero(title: 'Olá, ${usuario.nome}', subtitle: 'Gerencie seus torneios e acompanhe as partidas.', icon: Icons.dashboard_customize_rounded),
+            const SizedBox(height: 4),
             Expanded(
               child: StreamBuilder<List<TorneioModel>>(
                 stream:
@@ -151,9 +139,13 @@ Future<void> _gerenciarTorneio(
                       final torneio =
                           torneios[index];
 
-                      return TorneioCard(
-                        torneio: torneio,
-                        onGerenciar: () =>
+                      return TcgTournamentTile(
+                        nome: torneio.nome,
+                        data: torneio.dataHora,
+                        formato: torneio.formato,
+                        status: torneio.status,
+                        buttonText: 'Gerenciar',
+                        onTap: () =>
                             _gerenciarTorneio(
                           context,
                           torneio,
@@ -178,6 +170,6 @@ Future<void> _gerenciarTorneio(
           'Criar torneio',
         ),
       ),
-    );
+    ));
   }
 }

@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/session/usuario_session.dart';
@@ -146,7 +147,7 @@ class _InformarResultadoPageState
     final partida =
         widget.partida;
 
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(
         title: const Text(
           'Informar resultado',
@@ -156,6 +157,7 @@ class _InformarResultadoPageState
         padding:
             const EdgeInsets.all(16),
         children: [
+          TcgHero(title: 'Mesa ${partida.mesa}', subtitle: 'Selecione o placar e envie para confirmação.', icon: Icons.scoreboard_rounded),
           Text(
             'Mesa ${partida.mesa}',
             style:
@@ -291,7 +293,7 @@ class _InformarResultadoPageState
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

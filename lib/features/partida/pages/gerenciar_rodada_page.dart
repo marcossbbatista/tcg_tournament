@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../models/partida_model.dart';
@@ -216,7 +217,7 @@ class GerenciarRodadaPage extends StatelessWidget {
 
     final RodadaService rodadaService = RodadaService();
 
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(title: Text('Rodada $rodada')),
       body: StreamBuilder<String?>(
         stream: rodadaService.observarStatusRodada(
@@ -436,7 +437,7 @@ class GerenciarRodadaPage extends StatelessWidget {
           );
         },
       ),
-    );
+    ));
   }
 }
 

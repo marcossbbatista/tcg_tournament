@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/session/usuario_session.dart';
@@ -153,7 +154,7 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(
         title: const Text('Criar torneio'),
       ),
@@ -165,6 +166,7 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const TcgHero(title: 'Novo torneio', subtitle: 'Escolha o formato, a data e as rodadas da competição.', icon: Icons.add_circle_outline_rounded),
                 TextFormField(
                   controller: _nomeController,
                   decoration: const InputDecoration(
@@ -278,6 +280,6 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
           ),
         ),
       ),
-    );
+    ));
   }
 }

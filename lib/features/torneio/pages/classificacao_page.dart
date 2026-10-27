@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../models/classificacao_jogador_model.dart';
@@ -62,7 +63,7 @@ class _ClassificacaoPageState
   Widget build(
     BuildContext context,
   ) {
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(
         title: Text(
           widget.classificacaoFinal
@@ -120,6 +121,7 @@ class _ClassificacaoPageState
                 16,
               ),
               children: [
+            TcgHero(title: widget.nomeTorneio, subtitle: 'Confira os pontos e os critérios de desempate.', icon: Icons.leaderboard_rounded),
                 _CabecalhoClassificacao(
                   nomeTorneio:
                       widget.nomeTorneio,
@@ -175,7 +177,7 @@ class _ClassificacaoPageState
           );
         },
       ),
-    );
+    ));
   }
 }
 

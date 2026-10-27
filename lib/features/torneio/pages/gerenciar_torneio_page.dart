@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
 
@@ -129,15 +130,15 @@ class GerenciarTorneioPage extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
-          return const Scaffold(
+          return TcgTheme.wrap(const Scaffold(
             body: Center(child: CircularProgressIndicator()),
-          );
+          ));
         }
 
         if (snapshot.hasError) {
-          return const Scaffold(
+          return TcgTheme.wrap(const Scaffold(
             body: Center(child: Text('Não foi possível carregar o torneio.')),
-          );
+          ));
         }
 
         final torneioAtual = snapshot.data ?? torneio;
@@ -150,13 +151,14 @@ class GerenciarTorneioPage extends StatelessWidget {
   Widget _buildPagina(BuildContext context, TorneioModel torneioAtual) {
     final JogadorTorneioService jogadorService = JogadorTorneioService();
 
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(title: Text(torneioAtual.nome)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            TcgHero(title: torneioAtual.nome, subtitle: 'Acompanhe participantes, rodadas e classificação.', icon: Icons.emoji_events_rounded),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -364,7 +366,7 @@ class GerenciarTorneioPage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 

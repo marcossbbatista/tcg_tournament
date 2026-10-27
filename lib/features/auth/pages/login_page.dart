@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,6 +26,7 @@ class _LoginPageState extends State<LoginPage> {
   final _usuarioService = UsuarioService();
 
   bool _carregando = false;
+  bool _senhaVisivel = false;
 
   @override
   void dispose() {
@@ -188,7 +190,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
       ),
@@ -199,14 +201,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'TCG Tournament',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
+                const TcgHero(title: 'TCG Tournament', subtitle: 'Organize e acompanhe seus torneios', icon: Icons.style_rounded),
                 const SizedBox(height: 32),
 
                 TextField(
@@ -225,15 +220,16 @@ class _LoginPageState extends State<LoginPage> {
 
                 TextField(
                   controller: _senhaController,
-                  obscureText: true,
+                  obscureText: !_senhaVisivel,
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) {
                     if (!_carregando) {
                       _fazerLogin();
                     }
                   },
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Senha',
+                    suffixIcon: IconButton(tooltip: 'Mostrar ou ocultar senha', icon: Icon(_senhaVisivel ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel)),
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lock_outline),
                   ),
@@ -262,6 +258,6 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-    );
+    ));
   }
 }

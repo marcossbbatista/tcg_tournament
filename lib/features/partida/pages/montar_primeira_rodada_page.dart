@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../jogador/models/jogador_torneio_model.dart';
@@ -463,15 +464,15 @@ class _MontarPrimeiraRodadaPageState
   @override
   Widget build(BuildContext context) {
     if (_carregando) {
-      return const Scaffold(
+      return TcgTheme.wrap(const Scaffold(
         body: Center(
           child:
               CircularProgressIndicator(),
         ),
-      );
+      ));
     }
 
-    return Scaffold(
+    return TcgTheme.wrap(Scaffold(
       appBar: AppBar(
         title: const Text(
           'Montar Rodada 1',
@@ -481,6 +482,7 @@ class _MontarPrimeiraRodadaPageState
         padding:
             const EdgeInsets.all(16),
         children: [
+          TcgHero(title: widget.nomeTorneio, subtitle: 'Monte os primeiros confrontos da competição.', icon: Icons.account_tree_rounded),
           Text(
             widget.nomeTorneio,
             style:
@@ -630,7 +632,7 @@ class _MontarPrimeiraRodadaPageState
           ),
         ],
       ),
-    );
+    ));
   }
 }
 
