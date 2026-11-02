@@ -36,120 +36,103 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _fazerLogin() async {
-    if (_emailController.text.trim().isEmpty ||
-        _senhaController.text.isEmpty) {
-      _mostrarMensagem('Informe o e-mail e a senha.');
-      return;
-    }
+  
 
-    setState(() {
-      _carregando = true;
-    });
+Future<void> _fazerLogin() async {
+  if (_carregando) return;
 
-    try {
-      debugPrint('ETAPA 1: Iniciando autenticação');
+  setState(() => _carregando = true);
 
-      final resultado = await _authService.login(
-        email: _emailController.text.trim(),
-        senha: _senhaController.text,
-      );
+  try {
+    final resultado = await _authService.login(
+      email: _emailController.text.trim(),
+      senha: _senhaController.text,
+    );
 
-      debugPrint('ETAPA 2: Login autenticado');
-
-      final usuarioFirebase = resultado.user;
-
-      if (usuarioFirebase == null) {
-        throw Exception(
-          'Não foi possível identificar o usuário autenticado.',
-        );
-      }
-
-      debugPrint('ETAPA 3: UID = ${usuarioFirebase.uid}');
-      debugPrint('ETAPA 4: Buscando usuário no Firestore');
-
-      final usuario = await _usuarioService.buscarUsuario(
-        usuarioFirebase.uid,
-      );
-
-      debugPrint('ETAPA 5: Consulta ao Firestore concluída');
-
-      if (usuario == null) {
-        throw Exception(
-          'Os dados do usuário não foram encontrados. '
-          'Verifique se existe um documento na coleção users '
-          'com o ID igual ao UID do usuário autenticado.',
-        );
-      }
-
-      debugPrint('ETAPA 6: Usuário encontrado');
-      debugPrint('Tipo de usuário: ${usuario.tipo}');
-
-      UsuarioSession.iniciar(usuario);
-
-      if (!mounted) return;
-
-      if (usuario.tipo == 'adm') {
-        debugPrint('ETAPA 7: Abrindo tela do administrador');
-
-        await Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const HomeAdmPage(),
-          ),
-        );
-      } else if (usuario.tipo == 'jogador') {
-        debugPrint('ETAPA 7: Abrindo tela do jogador');
-
-        await Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const HomeJogadorPage(),
-          ),
-        );
-      } else {
-        throw Exception(
-          'Tipo de usuário inválido: ${usuario.tipo}',
-        );
-      }
-    } on FirebaseAuthException catch (e, stackTrace) {
-      debugPrint('ERRO FIREBASE AUTHENTICATION');
-      debugPrint('Código: ${e.code}');
-      debugPrint('Mensagem: ${e.message}');
-      debugPrint('$stackTrace');
-
-      if (!mounted) return;
-
-      _mostrarMensagem(_mensagemErroAutenticacao(e));
-    } on FirebaseException catch (e, stackTrace) {
-      debugPrint('ERRO FIREBASE');
-      debugPrint('Código: ${e.code}');
-      debugPrint('Mensagem: ${e.message}');
-      debugPrint('$stackTrace');
-
-      if (!mounted) return;
-
-      _mostrarMensagem(
-        'Erro ao consultar os dados: ${e.code}',
-      );
-    } catch (e, stackTrace) {
-      debugPrint('ERRO NO LOGIN');
-      debugPrint('$e');
-      debugPrint('$stackTrace');
-
-      if (!mounted) return;
-
-      _mostrarMensagem(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _carregando = false;
-        });
-      }
+    await _processarLogin(resultado);
+  } on FirebaseAuthException catch (e) {
+    _mostrarMensagem(_mensagemErroAutenticacao(e));
+  } on FirebaseException catch (e) {
+    _mostrarMensagem('Erro ao acessar o banco de dados: ${e.message}');
+  } catch (e) {
+    _mostrarMensagem('Não foi possível fazer login: $e');
+  } finally {
+    if (mounted) {
+      setState(() => _carregando = false);
     }
   }
+}
+
+Future<void> _fazerLoginComGoogle() async {
+  if (_carregando) return;
+
+  setState(() => _carregando = true);
+
+  try {
+    final resultado = await _authService.loginComGoogle();
+
+    await _processarLogin(
+      resultado,
+      criarUsuarioGoogle: true,
+    );
+  } on FirebaseAuthException catch (e) {
+    _mostrarMensagem(_mensagemErroAutenticacao(e));
+  } on FirebaseException catch (e) {
+    _mostrarMensagem('Erro ao acessar o banco de dados: ${e.message}');
+  } catch (e) {
+    _mostrarMensagem('Não foi possível entrar com o Google: $e');
+  } finally {
+    if (mounted) {
+      setState(() => _carregando = false);
+    }
+  }
+}
+
+Future<void> _processarLogin(
+  UserCredential resultado, {
+  bool criarUsuarioGoogle = false,
+}) async {
+  final usuarioFirebase = resultado.user;
+
+  if (usuarioFirebase == null) {
+    throw Exception('Não foi possível identificar o usuário.');
+  }
+
+  final usuario = criarUsuarioGoogle
+      ? await _usuarioService.buscarOuCriarUsuarioGoogle(
+          usuarioFirebase,
+        )
+      : await _usuarioService.buscarUsuario(
+          usuarioFirebase.uid,
+        );
+
+  if (usuario == null) {
+    throw Exception(
+      'Os dados do usuário não foram encontrados. '
+      'O cadastro precisa ser concluído no sistema.',
+    );
+  }
+
+  UsuarioSession.iniciar(usuario);
+
+  if (!mounted) return;
+
+  if (usuario.tipo == 'adm') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const HomeAdmPage(),
+      ),
+    );
+  } else {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const HomeJogadorPage(),
+      ),
+    );
+  }
+}
 
   String _mensagemErroAutenticacao(FirebaseAuthException e) {
     switch (e.code) {
@@ -279,7 +262,7 @@ SizedBox(
   width: double.infinity,
   height: 50,
   child: OutlinedButton(
-    onPressed: _carregando ? null : () {},
+    onPressed: _carregando ? null : _fazerLoginComGoogle,
     style: OutlinedButton.styleFrom(
       backgroundColor: Colors.white,
       foregroundColor: Colors.black87,
