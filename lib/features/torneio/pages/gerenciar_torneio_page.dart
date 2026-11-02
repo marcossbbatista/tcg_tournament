@@ -153,217 +153,221 @@ class GerenciarTorneioPage extends StatelessWidget {
 
     return TcgTheme.wrap(Scaffold(
       appBar: AppBar(title: Text(torneioAtual.nome)),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TcgHero(title: torneioAtual.nome, subtitle: 'Acompanhe participantes, rodadas e classificação.', icon: Icons.emoji_events_rounded),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      torneioAtual.nome,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _InfoLinha(
-                      icone: Icons.key,
-                      titulo: 'Código',
-                      valor: torneioAtual.codigo,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _InfoLinha(
-                      icone: Icons.calendar_month,
-                      titulo: 'Data',
-                      valor: _formatarData(torneioAtual.dataHora),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _InfoLinha(
-                      icone: Icons.access_time,
-                      titulo: 'Horário',
-                      valor: _formatarHorario(torneioAtual.dataHora),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _InfoLinha(
-                      icone: Icons.sports_esports,
-                      titulo: 'Formato',
-                      valor: torneioAtual.formato.toUpperCase(),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _InfoLinha(
-                      icone: Icons.repeat,
-                      titulo: 'Rodadas',
-                      valor: '${torneioAtual.quantidadeRodadas}',
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _InfoLinha(
-                      icone: Icons.flag,
-                      titulo: 'Rodada atual',
-                      valor: '${torneioAtual.rodadaAtual}',
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _InfoLinha(
-                      icone: Icons.info_outline,
-                      titulo: 'Status',
-                      valor: _formatarStatus(torneioAtual.status),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            Text(
-              'Participantes',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-
-            const SizedBox(height: 12),
-
-            StreamBuilder<List<JogadorTorneioModel>>(
-              stream: jogadorService.listarJogadores(torneioAtual.id),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text(
-                        'Não foi possível carregar os participantes.',
-                      ),
-                    ),
-                  );
-                }
-
-                final jogadores = snapshot.data ?? [];
-
-                final aprovados = jogadores
-                    .where((jogador) => jogador.status == 'aprovado')
-                    .length;
-
-                final pendentes = jogadores
-                    .where((jogador) => jogador.status == 'pendente')
-                    .length;
-
-                return Card(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TcgHero(title: torneioAtual.nome, subtitle: 'Acompanhe participantes, rodadas e classificação.', icon: Icons.emoji_events_rounded),
+                Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _ResumoParticipantes(
-                                titulo: 'Aprovados',
-                                quantidade: aprovados,
-                              ),
-                            ),
-
-                            const SizedBox(width: 12),
-
-                            Expanded(
-                              child: _ResumoParticipantes(
-                                titulo: 'Pendentes',
-                                quantidade: pendentes,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          torneioAtual.nome,
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
-
+            
                         const SizedBox(height: 16),
-
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => GerenciarJogadoresPage(
-                                    torneioId: torneioAtual.id,
-                                    nomeTorneio: torneioAtual.nome,
-                                  ),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.people),
-                            label: const Text('Gerenciar jogadores'),
-                          ),
+            
+                        _InfoLinha(
+                          icone: Icons.key,
+                          titulo: 'Código',
+                          valor: torneioAtual.codigo,
+                        ),
+            
+                        const SizedBox(height: 12),
+            
+                        _InfoLinha(
+                          icone: Icons.calendar_month,
+                          titulo: 'Data',
+                          valor: _formatarData(torneioAtual.dataHora),
+                        ),
+            
+                        const SizedBox(height: 12),
+            
+                        _InfoLinha(
+                          icone: Icons.access_time,
+                          titulo: 'Horário',
+                          valor: _formatarHorario(torneioAtual.dataHora),
+                        ),
+            
+                        const SizedBox(height: 12),
+            
+                        _InfoLinha(
+                          icone: Icons.sports_esports,
+                          titulo: 'Formato',
+                          valor: torneioAtual.formato.toUpperCase(),
+                        ),
+            
+                        const SizedBox(height: 12),
+            
+                        _InfoLinha(
+                          icone: Icons.repeat,
+                          titulo: 'Rodadas',
+                          valor: '${torneioAtual.quantidadeRodadas}',
+                        ),
+            
+                        const SizedBox(height: 12),
+            
+                        _InfoLinha(
+                          icone: Icons.flag,
+                          titulo: 'Rodada atual',
+                          valor: '${torneioAtual.rodadaAtual}',
+                        ),
+            
+                        const SizedBox(height: 12),
+            
+                        _InfoLinha(
+                          icone: Icons.info_outline,
+                          titulo: 'Status',
+                          valor: _formatarStatus(torneioAtual.status),
                         ),
                       ],
                     ),
                   ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            if (torneioAtual.status == 'inscricoes')
-              _CardTorneioNaoIniciado(
-                onIniciar: () => _iniciarTorneio(context, torneioAtual),
-              )
-            else if (torneioAtual.status == 'em_andamento')
-              StreamBuilder<String?>(
-                stream: RodadaService().observarStatusRodada(
-                  torneioId: torneioAtual.id,
-                  rodada: torneioAtual.rodadaAtual,
                 ),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return const Card(
+            
+                const SizedBox(height: 24),
+            
+                Text(
+                  'Participantes',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+            
+                const SizedBox(height: 12),
+            
+                StreamBuilder<List<JogadorTorneioModel>>(
+                  stream: jogadorService.listarJogadores(torneioAtual.id),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      );
+                    }
+            
+                    if (snapshot.hasError) {
+                      return const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'Não foi possível carregar os participantes.',
+                          ),
+                        ),
+                      );
+                    }
+            
+                    final jogadores = snapshot.data ?? [];
+            
+                    final aprovados = jogadores
+                        .where((jogador) => jogador.status == 'aprovado')
+                        .length;
+            
+                    final pendentes = jogadores
+                        .where((jogador) => jogador.status == 'pendente')
+                        .length;
+            
+                    return Card(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: CircularProgressIndicator()),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _ResumoParticipantes(
+                                    titulo: 'Aprovados',
+                                    quantidade: aprovados,
+                                  ),
+                                ),
+            
+                                const SizedBox(width: 12),
+            
+                                Expanded(
+                                  child: _ResumoParticipantes(
+                                    titulo: 'Pendentes',
+                                    quantidade: pendentes,
+                                  ),
+                                ),
+                              ],
+                            ),
+            
+                            const SizedBox(height: 16),
+            
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => GerenciarJogadoresPage(
+                                        torneioId: torneioAtual.id,
+                                        nomeTorneio: torneioAtual.nome,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.people),
+                                label: const Text('Gerenciar jogadores'),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
-                  }
-
-                  return _CardRodadaAtual(
-                    torneio: torneioAtual,
-                    statusRodada: snapshot.data,
-                    onVerClassificacao: () =>
-                        _abrirClassificacao(context, torneioAtual),
-                  );
-                },
-              )
-            else if (torneioAtual.status == 'finalizado')
-              _CardTorneioFinalizado(
-                onVerClassificacao: () => _abrirClassificacao(
-                  context,
-                  torneioAtual,
-                  classificacaoFinal: true,
+                  },
                 ),
-              ),
-          ],
+            
+                const SizedBox(height: 24),
+            
+                if (torneioAtual.status == 'inscricoes')
+                  _CardTorneioNaoIniciado(
+                    onIniciar: () => _iniciarTorneio(context, torneioAtual),
+                  )
+                else if (torneioAtual.status == 'em_andamento')
+                  StreamBuilder<String?>(
+                    stream: RodadaService().observarStatusRodada(
+                      torneioId: torneioAtual.id,
+                      rodada: torneioAtual.rodadaAtual,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        return const Card(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        );
+                      }
+            
+                      return _CardRodadaAtual(
+                        torneio: torneioAtual,
+                        statusRodada: snapshot.data,
+                        onVerClassificacao: () =>
+                            _abrirClassificacao(context, torneioAtual),
+                      );
+                    },
+                  )
+                else if (torneioAtual.status == 'finalizado')
+                  _CardTorneioFinalizado(
+                    onVerClassificacao: () => _abrirClassificacao(
+                      context,
+                      torneioAtual,
+                      classificacaoFinal: true,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     ));

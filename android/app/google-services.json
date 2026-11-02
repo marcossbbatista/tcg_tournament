@@ -12,7 +12,20 @@
           "package_name": "com.example.tcg_tournament"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1031462015519-lh9o2j12o8486i807pvr721a3gtgkirt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tcg_tournament",
+            "certificate_hash": "200bb3be681d69d221c78533f47c0ab6de2e162c"
+          }
+        },
+        {
+          "client_id": "1031462015519-bh6nevf8ifr3fvgjl2cju6h4dhprv50k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCsEPaauYhKokZyWLuUS-BAZjF5Y7iClUA"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1031462015519-9a8al5lb6ssd9tuia37lou7paihbj66j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1031462015519-49abd2eap5h79b994i7tc736u6me2pb6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.tcgTournament"
+              }
+            }
+          ]
         }
       }
     }

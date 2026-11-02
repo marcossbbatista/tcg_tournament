@@ -237,22 +237,99 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 24),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _carregando ? null : _fazerLogin,
-                    child: _carregando
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text('Entrar'),
-                  ),
-                ),
+                // Botão entrar
+SizedBox(
+  width: double.infinity,
+  height: 50,
+  child: ElevatedButton(
+    onPressed: _carregando ? null : _fazerLogin,
+    child: _carregando
+        ? const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+            ),
+          )
+        : const Text('Entrar'),
+  ),
+),
+
+const SizedBox(height: 20),
+
+// Separador OU
+const Row(
+  children: [
+    Expanded(child: Divider()),
+    Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Text(
+        'OU',
+        style: TextStyle(color: Colors.grey),
+      ),
+    ),
+    Expanded(child: Divider()),
+  ],
+),
+
+const SizedBox(height: 20),
+
+// Botão Google
+SizedBox(
+  width: double.infinity,
+  height: 50,
+  child: OutlinedButton(
+    onPressed: _carregando ? null : () {},
+    style: OutlinedButton.styleFrom(
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black87,
+      side: const BorderSide(
+        color: Color(0xFFDADCE0),
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(
+          'assets/images/google_logo.png',
+          height: 22,
+          width: 22,
+        ),
+        const SizedBox(width: 12),
+        const Text(
+          'Continuar com Google',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+
+const SizedBox(height: 16),
+
+// Criar conta
+SizedBox(
+  width: double.infinity,
+  height: 50,
+  child: OutlinedButton(
+    onPressed: () {},
+    child: const Text('Criar conta'),
+  ),
+),
+
+const SizedBox(height: 16),
+
+// Esqueci minha senha
+TextButton(
+  onPressed: () {},
+  child: const Text('Esqueci minha senha'),
+),
               ],
             ),
           ),
