@@ -21,7 +21,7 @@ class TomPreflightPage extends StatelessWidget {
         final resultado = snapshot.data!;
         return ListView(padding: const EdgeInsets.all(16), children: [
           const TcgHero(title: 'Conferência do torneio',
-              subtitle: 'Dados prontos para o serializador TDF, aguardando homologação.',
+              subtitle: 'Confira os dados antes da exportação TDF experimental.',
               icon: Icons.fact_check_outlined),
           Card(child: Padding(padding: const EdgeInsets.all(16),
             child: Text(resultado.dadosCompletos
@@ -39,8 +39,8 @@ class TomPreflightPage extends StatelessWidget {
           ...resultado.avisos.map((a) => ListTile(
               leading: const Icon(Icons.info_outline), title: Text(a))),
           const SizedBox(height: 16),
-          const Text('Esta tela não gera um arquivo .tdf. A exportação será '
-              'ativada após comparar o XML com um arquivo real do TOM.'),
+          const Text('Para gerar o arquivo, volte ao torneio e selecione Exportar torneio .tdf. '
+              'A validação final deve ocorrer no TOM oficial.'),
         ]);
       },
     ),

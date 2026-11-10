@@ -174,6 +174,7 @@ class JogadorTorneioService {
     await torneioRef.collection('players').doc(jogadorUid).update({
       'ativo': false,
       'rodadaDesistencia': torneio.rodadaAtual,
+      'desistiuEm': Timestamp.now(),
     });
   }
 

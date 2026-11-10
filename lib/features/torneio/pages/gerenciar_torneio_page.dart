@@ -15,6 +15,8 @@ import '../../partida/services/topcut_service.dart';
 
 import 'classificacao_page.dart';
 import 'tom_preflight_page.dart';
+import 'tom_tdf_page.dart';
+import 'tom_tdf_metadata_page.dart';
 
 class GerenciarTorneioPage extends StatelessWidget {
   final TorneioModel torneio;
@@ -240,6 +242,20 @@ class GerenciarTorneioPage extends StatelessWidget {
                   label: const Text('Verificar dados para TOM / TDF'),
                   onPressed: () => Navigator.push(context, MaterialPageRoute(
                       builder: (_) => TomPreflightPage(torneioId: torneioAtual.id))),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.edit_document),
+                  label: const Text('Editar metadados TOM'),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => TomTdfMetadataPage(torneioId: torneioAtual.id))),
+                ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  icon: const Icon(Icons.file_download_outlined),
+                  label: const Text('Exportar torneio .tdf'),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => TomTdfPage(torneioId: torneioAtual.id))),
                 ),
                 const SizedBox(height: 24),
             

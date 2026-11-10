@@ -4,8 +4,8 @@ import '../../partida/models/partida_model.dart';
 import '../models/torneio_model.dart';
 import '../rules/pokemon_rulebook.dart';
 
-/// Prepara e valida os dados para um futuro serializador .tdf.
-/// A especificação exata do TOM depende de um arquivo de referência.
+/// Faz a conferência de dados; o serializador TDF é experimental e
+/// depende de validação com o software TOM oficial.
 class TomPreflightResult {
   final List<String> erros;
   final List<String> avisos;
@@ -144,7 +144,7 @@ class TomPreflightService {
       'jogadores': [for (final j in jogadores) j.toMap()],
       'rodadas': rodadas,
     };
-    avisos.add('Serialização .tdf aguardando amostra real do TOM e validação no software oficial.');
+    avisos.add('Exportação .tdf experimental disponível. Valide o arquivo no TOM; o Play! Tools exige conclusão no software oficial.');
     return TomPreflightResult(erros, avisos, snapshot);
   }
 }

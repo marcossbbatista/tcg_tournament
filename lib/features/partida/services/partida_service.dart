@@ -76,6 +76,7 @@ class PartidaService {
         'resultado': resolvido.name,
         'resultadoInformadoPor': informadoPor,
         'status': especial ? 'finalizada' : 'aguardando_confirmacao',
+        if (especial) 'concluidaEm': Timestamp.now(),
       });
     });
   }
@@ -91,7 +92,7 @@ class PartidaService {
       if (!snapshot.exists || snapshot.data()?['status'] != 'aguardando_confirmacao') {
         throw StateError('Partida não está aguardando confirmação.');
       }
-      tx.update(ref, {'status': 'finalizada'});
+      tx.update(ref, {'status': 'finalizada', 'concluidaEm': Timestamp.now()});
     });
   }
 
@@ -176,6 +177,7 @@ Future<void> resolverPartidaContestada({
     'placarJogador2': placarJogador2,
     'resultado': definido.name,
     'status': 'finalizada',
+    'concluidaEm': Timestamp.now(),
   });
 }
 
