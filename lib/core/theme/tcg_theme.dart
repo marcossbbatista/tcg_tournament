@@ -105,6 +105,29 @@ class TcgTheme {
         contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: Colors.white,
+        headerBackgroundColor: TcgTheme.blue,
+        headerForegroundColor: Colors.white,
+        dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          return TcgTheme.navy;
+        }),
+        todayForegroundColor: WidgetStateProperty.all(TcgTheme.blue),
+        todayBorder: const BorderSide(color: TcgTheme.blue),
+        yearForegroundColor: WidgetStateProperty.all(TcgTheme.blue),
+        dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return TcgTheme.blue;
+          }
+          return Colors.transparent;
+        }),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
     );
   }
 

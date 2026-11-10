@@ -2,6 +2,8 @@ import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tcg_tournament/features/auth/pages/recuperar_senha_page.dart';
+import 'package:tcg_tournament/features/auth/pages/registrar_page.dart';
 
 import '../services/auth_service.dart';
 import '../services/usuario_service.dart';
@@ -174,13 +176,14 @@ Future<void> _processarLogin(
   @override
   Widget build(BuildContext context) {
     return TcgTheme.wrap(Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Login'),
       ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(30),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -221,98 +224,116 @@ Future<void> _processarLogin(
                 const SizedBox(height: 24),
 
                 // Botão entrar
-SizedBox(
-  width: double.infinity,
-  height: 50,
-  child: ElevatedButton(
-    onPressed: _carregando ? null : _fazerLogin,
-    child: _carregando
-        ? const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-            ),
-          )
-        : const Text('Entrar'),
-  ),
-),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _carregando ? null : _fazerLogin,
+                    child: _carregando
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text('Entrar'),
+                  ),
+                ),
 
-const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-// Separador OU
-const Row(
-  children: [
-    Expanded(child: Divider()),
-    Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      child: Text(
-        'OU',
-        style: TextStyle(color: Colors.grey),
-      ),
-    ),
-    Expanded(child: Divider()),
-  ],
-),
+                // Separador OU
+                const Row(
+                  children: [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OU',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
 
-const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-// Botão Google
-SizedBox(
-  width: double.infinity,
-  height: 50,
-  child: OutlinedButton(
-    onPressed: _carregando ? null : _fazerLoginComGoogle,
-    style: OutlinedButton.styleFrom(
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black87,
-      side: const BorderSide(
-        color: Color(0xFFDADCE0),
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(
-          'assets/images/google_logo.png',
-          height: 22,
-          width: 22,
-        ),
-        const SizedBox(width: 12),
-        const Text(
-          'Continuar com Google',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    ),
-  ),
-),
+                // Botão Google
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: _carregando ? null : _fazerLoginComGoogle,
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black87,
+                      side: const BorderSide(
+                        color: Color(0xFFDADCE0),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/google_logo.png',
+                          height: 22,
+                          width: 22,
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Continuar com Google',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
-const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-// Criar conta
-SizedBox(
-  width: double.infinity,
-  height: 50,
-  child: OutlinedButton(
-    onPressed: () {},
-    child: const Text('Criar conta'),
-  ),
-),
+                // Criar conta
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: () {},
+                    child: TextButton(
+                  onPressed: _carregando
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RegistrarPage(),
+                            ),
+                          );
+                        },
+                  child: const Text('Criar conta'),
+                )
+                  ),
+                ),
 
-const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-// Esqueci minha senha
-TextButton(
-  onPressed: () {},
-  child: const Text('Esqueci minha senha'),
-),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RecuperarSenhaPage(),
+                      ),
+                    );
+                  },
+                  child: const Text('Esqueci minha senha'),
+                ),
               ],
             ),
           ),

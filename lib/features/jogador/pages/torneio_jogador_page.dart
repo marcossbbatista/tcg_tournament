@@ -48,12 +48,12 @@ class _TorneioJogadorPageState
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
         children: [
           TcgHero(title: torneio.nome, subtitle: 'Confira sua inscrição e acompanhe sua partida.', icon: Icons.emoji_events_rounded),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
               child: Column(
                 crossAxisAlignment:
                     CrossAxisAlignment.start,

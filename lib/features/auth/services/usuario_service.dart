@@ -59,4 +59,13 @@ class UsuarioService {
       },
     );
   }
+
+  
+Future<void> criarUsuario(UsuarioModel usuario) async {
+  await _firestore
+      .collection('users')
+      .doc(usuario.uid)
+      .set(usuario.toMap());
+}
+
 }

@@ -156,14 +156,14 @@ class GerenciarTorneioPage extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TcgHero(title: torneioAtual.nome, subtitle: 'Acompanhe participantes, rodadas e classificação.', icon: Icons.emoji_events_rounded),
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -276,7 +276,7 @@ class GerenciarTorneioPage extends StatelessWidget {
             
                     return Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
                         child: Column(
                           children: [
                             Row(
@@ -383,7 +383,7 @@ class _CardTorneioNaoIniciado extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
         child: Column(
           children: [
             const Icon(Icons.emoji_events_outlined, size: 42),
@@ -646,7 +646,7 @@ class _CardRodadaAtual extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
         child: Column(
           children: [
             const Icon(Icons.sports_esports, size: 42),
@@ -828,7 +828,7 @@ class _ResumoParticipantes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
       decoration: BoxDecoration(
         border: Border.all(color: Theme.of(context).dividerColor),
         borderRadius: BorderRadius.circular(12),

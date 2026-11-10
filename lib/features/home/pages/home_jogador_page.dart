@@ -167,20 +167,23 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
                     );
                   }
 
-                  return ListView.builder(
-                    itemCount: torneios.length,
-                    itemBuilder: (context, index) {
-                      final item = torneios[index];
-
-                      return TcgTournamentTile(
-                        nome: item.torneio.nome,
-                        data: item.torneio.dataHora,
-                        formato: item.torneio.formato,
-                        status: item.status,
-                        pontos: item.pontos,
-                        onTap: () => _abrirTorneio(item),
-                      );
-                    },
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 60),
+                    child: ListView.builder(
+                      itemCount: torneios.length,
+                      itemBuilder: (context, index) {
+                        final item = torneios[index];
+                    
+                        return TcgTournamentTile(
+                          nome: item.torneio.nome,
+                          data: item.torneio.dataHora,
+                          formato: item.torneio.formato,
+                          status: item.status,
+                          pontos: item.pontos,
+                          onTap: () => _abrirTorneio(item),
+                        );
+                      },
+                    ),
                   );
                 },
               ),

@@ -36,22 +36,19 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
   }
 
   Future<void> _selecionarData() async {
-    final DateTime agora = DateTime.now();
-
-    final DateTime? data = await showDatePicker(
+    final data = await showDatePicker(
       context: context,
-      initialDate: agora,
-      firstDate: agora,
-      lastDate: DateTime(
-        agora.year + 5,
-      ),
+      initialDate: _dataSelecionada ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2030),
+      locale: const Locale('pt', 'BR'),
     );
 
-    if (data == null) return;
-
-    setState(() {
-      _dataSelecionada = data;
-    });
+    if (data != null) {
+      setState(() {
+        _dataSelecionada = data;
+      });
+    }
   }
 
   Future<void> _selecionarHorario() async {
@@ -185,29 +182,32 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<String>(
-                  value: _formatoSelecionado,
-                  decoration: const InputDecoration(
-                    labelText: 'Formato',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'md1',
-                      child: Text('MD1'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'md3',
-                      child: Text('MD3'),
-                    ),
-                  ],
-                  onChanged: (valor) {
-                    if (valor == null) return;
-
-                    setState(() {
-                      _formatoSelecionado = valor;
-                    });
-                  },
+                value: _formatoSelecionado,
+                isExpanded: true,
+                // menuWidth: 150,
+                alignment: AlignmentDirectional.centerStart,
+                decoration: const InputDecoration(
+                  labelText: 'Formato',
+                  border: OutlineInputBorder(),
                 ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'md1',
+                    child: Text('MD1'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'md3',
+                    child: Text('MD3'),
+                  ),
+                ],
+                onChanged: (valor) {
+                  if (valor == null) return;
+
+                  setState(() {
+                    _formatoSelecionado = valor;
+                  });
+                },
+              ),
 
                 const SizedBox(height: 16),
 
