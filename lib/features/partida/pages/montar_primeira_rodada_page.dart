@@ -450,6 +450,29 @@ class _MontarPrimeiraRodadaPageState
     }
   }
 
+  Future<void> _gerarAutomaticamente() async {
+    if (_confrontos.isNotEmpty || _bye != null) {
+      _mostrarMensagem('Remova os confrontos manuais antes de gerar automaticamente.');
+      return;
+    }
+    setState(() => _salvando = true);
+    try {
+      final retorno = await _service.gerarPrimeiraRodadaAutomatica(
+          torneioId: widget.torneioId);
+      if (!mounted) return;
+      if (retorno == 'ok') {
+        _mostrarMensagem('Pareamentos Swiss criados. Revise antes de iniciar.');
+        Navigator.pop(context, true);
+      } else {
+        _mostrarMensagem('Não foi possível gerar: $retorno');
+      }
+    } catch (e) {
+      if (mounted) _mostrarMensagem('Erro ao gerar os confrontos: $e');
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
+  }
+
   void _mostrarMensagem(
     String mensagem,
   ) {
@@ -577,6 +600,12 @@ class _MontarPrimeiraRodadaPageState
 
           const SizedBox(height: 24),
 
+          OutlinedButton.icon(
+            onPressed: _salvando ? null : _gerarAutomaticamente,
+            icon: const Icon(Icons.shuffle_rounded),
+            label: const Text('Gerar pareamentos suíços automaticamente'),
+          ),
+          const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed:
                 _adicionarConfronto,

@@ -11,8 +11,10 @@ import '../../jogador/pages/gerenciar_jogadores_page.dart';
 import '../../partida/pages/montar_primeira_rodada_page.dart';
 import '../../partida/pages/gerenciar_rodada_page.dart';
 import '../../partida/services/rodada_service.dart';
+import '../../partida/services/topcut_service.dart';
 
 import 'classificacao_page.dart';
+import 'tom_preflight_page.dart';
 
 class GerenciarTorneioPage extends StatelessWidget {
   final TorneioModel torneio;
@@ -232,6 +234,13 @@ class GerenciarTorneioPage extends StatelessWidget {
                   ),
                 ),
             
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.fact_check_outlined),
+                  label: const Text('Verificar dados para TOM / TDF'),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => TomPreflightPage(torneioId: torneioAtual.id))),
+                ),
                 const SizedBox(height: 24),
             
                 Text(
@@ -420,7 +429,11 @@ class _CardRodadaAtual extends StatelessWidget {
     required this.onVerClassificacao,
   });
 
-  bool get _ultimaRodada => torneio.rodadaAtual >= torneio.quantidadeRodadas;
+  bool get _ultimaRodadaSwiss => torneio.rodadaAtual == torneio.quantidadeRodadas;
+  bool get _faseTopCut => torneio.rodadaAtual > torneio.quantidadeRodadas;
+  bool get _topCutConcluido => torneio.topcutConcluido;
+  bool get _podeFinalizar => (torneio.tamanhoTopCut == 0 && _ultimaRodadaSwiss) ||
+      (torneio.tamanhoTopCut > 0 && _topCutConcluido);
 
   String _titulo() {
     switch (statusRodada) {
@@ -520,6 +533,11 @@ class _CardRodadaAtual extends StatelessWidget {
 
           break;
 
+        case 'sem_pareamento_valido':
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:
+            Text('Não foi possível parear sem repetir adversários. Revise os pods e o histórico.')));
+          break;
+
         case 'jogadores_insuficientes':
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -548,6 +566,23 @@ class _CardRodadaAtual extends StatelessWidget {
           content: Text('Não foi possível gerar a próxima rodada.'),
         ),
       );
+    }
+  }
+
+  Future<void> _gerarTopCut(BuildContext context) async {
+    try {
+      final resultado = _faseTopCut
+          ? await TopCutService().gerarProximaRodada(torneioId: torneio.id)
+          : await TopCutService().iniciarTopCut(torneioId: torneio.id);
+      if (!context.mounted) return;
+      final mensagem = resultado == 'ok'
+          ? 'Chave de eliminação criada. Revise e inicie a rodada.'
+          : 'Não foi possível gerar Top Cut: $resultado';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao gerar Top Cut: $e')));
     }
   }
 
@@ -697,7 +732,8 @@ class _CardRodadaAtual extends StatelessWidget {
               ),
             ),
 
-            if (statusRodada == 'finalizada' && !_ultimaRodada) ...[
+            if (statusRodada == 'finalizada' &&
+                torneio.rodadaAtual < torneio.quantidadeRodadas) ...[
               const SizedBox(height: 12),
 
               SizedBox(
@@ -710,7 +746,17 @@ class _CardRodadaAtual extends StatelessWidget {
               ),
             ],
 
-            if (statusRodada == 'finalizada' && _ultimaRodada) ...[
+            if (statusRodada == 'finalizada' &&
+                ((torneio.tamanhoTopCut > 0 && !_podeFinalizar) ||
+                (_faseTopCut && !_topCutConcluido))) ...[
+              const SizedBox(height: 12),
+              SizedBox(width: double.infinity, child: ElevatedButton.icon(
+                onPressed: () => _gerarTopCut(context),
+                icon: const Icon(Icons.account_tree_rounded),
+                label: Text(_faseTopCut ? 'Gerar próxima fase eliminatória' : 'Iniciar Top Cut'),
+              )),
+            ],
+            if (statusRodada == 'finalizada' && _podeFinalizar) ...[
               const SizedBox(height: 16),
 
               const Divider(),

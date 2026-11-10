@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/session/usuario_session.dart';
 import '../services/torneio_service.dart';
+import '../rules/pokemon_rulebook.dart';
 
 class CriarTorneioPage extends StatefulWidget {
   const CriarTorneioPage({super.key});
@@ -18,6 +19,15 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
   final TextEditingController _quantidadeRodadasController =
       TextEditingController();
 
+  final _sanctionController = TextEditingController();
+  final _organizadorController = TextEditingController();
+  final _organizadorPlayerIdController = TextEditingController();
+  String _tipoEvento = 'custom';
+  String _formatoJogo = 'standard';
+  String _agrupamento = 'combinado';
+  int _temporada = PokemonRulebook.temporadaAtual;
+  int _tamanhoTopCut = 0;
+
   final TorneioService _torneioService = TorneioService();
 
   DateTime? _dataSelecionada;
@@ -31,6 +41,9 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
   void dispose() {
     _nomeController.dispose();
     _quantidadeRodadasController.dispose();
+    _sanctionController.dispose();
+    _organizadorController.dispose();
+    _organizadorPlayerIdController.dispose();
 
     super.dispose();
   }
@@ -113,6 +126,16 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
           _quantidadeRodadasController.text,
         ),
         criadoPor: usuario.uid,
+        sanctionId: _sanctionController.text.trim().isEmpty ? null : _sanctionController.text.trim(),
+        organizadorNome: _organizadorController.text.trim().isEmpty
+            ? usuario.nome : _organizadorController.text.trim(),
+        organizadorPlayerId: _organizadorPlayerIdController.text.trim().isEmpty
+            ? null : _organizadorPlayerIdController.text.trim(),
+        tipoEvento: _tipoEvento,
+        formatoJogo: _formatoJogo,
+        temporada: _temporada,
+        agrupamentoEtario: _agrupamento,
+        tamanhoTopCut: _tamanhoTopCut,
       );
 
       if (!mounted) return;
@@ -132,9 +155,7 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
     } catch (e) {
       if (!mounted) return;
 
-      _mostrarMensagem(
-        'Não foi possível criar o torneio.',
-      );
+      _mostrarMensagem('Não foi possível criar o torneio: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -182,6 +203,94 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
                   },
                 ),
 
+                const SizedBox(height: 16),
+
+                DropdownButtonFormField<String>(
+                  value: _tipoEvento,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de evento', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'custom', child: Text('Torneio casual / Custom')),
+                    DropdownMenuItem(value: 'league_challenge', child: Text('Desafio de Liga (League Challenge)')),
+                    DropdownMenuItem(value: 'league_cup', child: Text('Copa de Liga (League Cup)')),
+                    DropdownMenuItem(value: 'prerelease', child: Text('Pré-lançamento (Prerelease)')),
+                  ],
+                  onChanged: (v) => setState(() => _tipoEvento = v ?? 'custom'),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _formatoJogo,
+                  decoration: const InputDecoration(
+                    labelText: 'Formato do Pokémon TCG', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'standard', child: Text('TCG Standard')),
+                    DropdownMenuItem(value: 'expanded', child: Text('TCG Expanded')),
+                    DropdownMenuItem(value: 'limited', child: Text('TCG Limited / Selado')),
+                  ],
+                  onChanged: (v) => setState(() => _formatoJogo = v ?? 'standard'),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  value: _temporada,
+                  decoration: const InputDecoration(
+                    labelText: 'Temporada oficial', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 2026, child: Text('2026')),
+                    DropdownMenuItem(value: 2027, child: Text('2027')),
+                  ],
+                  onChanged: (v) => setState(() => _temporada = v ?? 2027),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _agrupamento,
+                  decoration: const InputDecoration(
+                    labelText: 'Divisões etárias / Pods', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'combinado', child: Text('Swiss combinado (divisões modificadas)')),
+                    DropdownMenuItem(value: 'separado', child: Text('Swiss separado por divisão')),
+                  ],
+                  onChanged: (v) => setState(() => _agrupamento = v ?? 'combinado'),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  value: _tamanhoTopCut,
+                  decoration: const InputDecoration(
+                    labelText: 'Top Cut após Swiss', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 0, child: Text('Sem Top Cut')),
+                    DropdownMenuItem(value: 2, child: Text('Top 2')),
+                    DropdownMenuItem(value: 4, child: Text('Top 4')),
+                    DropdownMenuItem(value: 8, child: Text('Top 8')),
+                  ],
+                  onChanged: (v) => setState(() => _tamanhoTopCut = v ?? 0),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _organizadorController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nome do organizador', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _organizadorPlayerIdController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Player ID do organizador', border: OutlineInputBorder()),
+                  validator: (v) => PokemonRulebook.eventoSancionado(_tipoEvento)
+                      ? PokemonRulebook.validarIdentificador(v) : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _sanctionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Sanction ID do Play! Tools', border: OutlineInputBorder()),
+                  validator: (v) => PokemonRulebook.eventoSancionado(_tipoEvento) &&
+                      (v == null || v.trim().isEmpty)
+                      ? 'Obrigatório para evento sancionado' : null,
+                ),
+                const SizedBox(height: 16),
+                const Text('Sanction ID não é o código interno de convite. '
+                    'Para eventos oficiais, use o código emitido pelo Play! Tools.'),
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<String>(
