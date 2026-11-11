@@ -291,31 +291,32 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<String>(
-                  value: _formatoSelecionado,
-                  isExpanded: true,
-                  alignment: AlignmentDirectional.centerStart,
-                  decoration: const InputDecoration(
-                    labelText: 'Formato',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'md1',
-                      child: Text('MD1'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'md3',
-                      child: Text('MD3'),
-                    ),
-                  ],
-                  onChanged: (valor) {
-                    if (valor == null) return;
-
-                    setState(() {
-                      _formatoSelecionado = valor;
-                    });
-                  },
+                value: _formatoSelecionado,
+                isExpanded: true,
+                // menuWidth: 150,
+                alignment: AlignmentDirectional.centerStart,
+                decoration: const InputDecoration(
+                  labelText: 'Formato',
+                  border: OutlineInputBorder(),
                 ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'md1',
+                    child: Text('MD1'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'md3',
+                    child: Text('MD3'),
+                  ),
+                ],
+                onChanged: (valor) {
+                  if (valor == null) return;
+
+                  setState(() {
+                    _formatoSelecionado = valor;
+                  });
+                },
+              ),
 
                 const SizedBox(height: 16),
 
