@@ -33,6 +33,7 @@ class _InformarResultadoPageState
   int? _placarJogador2;
 
   bool _salvando = false;
+  ResultadoPartida? _resultadoEspecial;
 
   List<_OpcaoResultado> _opcoes() {
     if (widget.formato == 'md1') {
@@ -77,8 +78,8 @@ class _InformarResultadoPageState
   }
 
   Future<void> _salvar() async {
-    if (_placarJogador1 == null ||
-        _placarJogador2 == null) {
+    if (_resultadoEspecial == null && (_placarJogador1 == null ||
+        _placarJogador2 == null)) {
       _mostrarMensagem(
         'Selecione o resultado da partida.',
       );
@@ -106,9 +107,10 @@ class _InformarResultadoPageState
         torneioId: widget.torneioId,
         rodada: widget.rodada,
         partidaId: widget.partida.id,
-        placarJogador1: _placarJogador1!,
-        placarJogador2: _placarJogador2!,
+        placarJogador1: _placarJogador1 ?? 0,
+        placarJogador2: _placarJogador2 ?? 0,
         informadoPor: usuario.uid,
+        resultado: _resultadoEspecial,
       );
 
       if (!mounted) return;
@@ -229,7 +231,8 @@ class _InformarResultadoPageState
 
           const SizedBox(height: 12),
 
-          ..._opcoes().map(
+          ..._opcoes().where((opcao) => widget.partida.fase != 'topcut' ||
+              opcao.placarJogador1 != opcao.placarJogador2).map(
             (opcao) {
               final selecionado =
                   _placarJogador1 ==
@@ -254,6 +257,7 @@ class _InformarResultadoPageState
                   ),
                   onChanged: (_) {
                     setState(() {
+                      _resultadoEspecial = null;
                       _placarJogador1 =
                           opcao
                               .placarJogador1;
@@ -268,6 +272,28 @@ class _InformarResultadoPageState
             },
           ),
 
+          if (UsuarioSession.ehAdm) ...[
+            const SizedBox(height: 12),
+            const Text('Decisão administrativa'),
+            DropdownButtonFormField<ResultadoPartida>(
+              value: _resultadoEspecial,
+              hint: const Text('W.O. ou derrota dupla'),
+              items: [
+                const DropdownMenuItem(value: ResultadoPartida.woJogador1,
+                    child: Text('W.O. Jogador 1 (vitória do Jogador 2)')),
+                const DropdownMenuItem(value: ResultadoPartida.woJogador2,
+                    child: Text('W.O. Jogador 2 (vitória do Jogador 1)')),
+                if (widget.partida.fase != 'topcut')
+                  const DropdownMenuItem(value: ResultadoPartida.derrotaDupla,
+                      child: Text('Derrota dupla')),
+              ],
+              onChanged: (v) => setState(() {
+                _resultadoEspecial = v;
+                _placarJogador1 = null;
+                _placarJogador2 = null;
+              }),
+            ),
+          ],
           const SizedBox(height: 24),
 
           ElevatedButton.icon(

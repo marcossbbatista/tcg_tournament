@@ -8,6 +8,7 @@ import '../../torneio/pages/criar_torneio_page.dart';
 import '../../torneio/services/torneio_service.dart';
 import '../../../core/session/usuario_session.dart';
 import '../../torneio/pages/gerenciar_torneio_page.dart';
+import '../../torneio/pages/tom_tdf_page.dart';
 
 class HomeAdmPage extends StatelessWidget {
   const HomeAdmPage({super.key});
@@ -92,6 +93,13 @@ Future<void> _gerenciarTorneio(
               CrossAxisAlignment.stretch,
           children: [
             TcgHero(title: 'Olá, ${usuario.nome}', subtitle: 'Gerencie seus torneios e acompanhe as partidas.', icon: Icons.dashboard_customize_rounded),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const TomTdfPage())),
+              icon: const Icon(Icons.file_open_outlined),
+              label: const Text('Importar torneio do TOM (.tdf)'),
+            ),
             const SizedBox(height: 4),
             Expanded(
               child: StreamBuilder<List<TorneioModel>>(

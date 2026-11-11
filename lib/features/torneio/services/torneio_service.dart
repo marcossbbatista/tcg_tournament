@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/torneio_model.dart';
+import '../rules/pokemon_rulebook.dart';
 
 class TorneioService {
   final FirebaseFirestore _firestore =
@@ -14,7 +15,30 @@ class TorneioService {
     required String formato,
     required int quantidadeRodadas,
     required String criadoPor,
+    String? sanctionId,
+    String organizadorNome = '',
+    String? organizadorPlayerId,
+    String tipoEvento = 'custom',
+    String formatoJogo = 'standard',
+    String sistemaPareamento = 'swiss',
+    int temporada = PokemonRulebook.temporadaAtual,
+    String agrupamentoEtario = 'combinado',
+    int tamanhoTopCut = 0,
   }) async {
+    if (PokemonRulebook.eventoSancionado(tipoEvento) &&
+        (sanctionId == null || sanctionId.trim().isEmpty)) {
+      throw ArgumentError('Informe o Sanction ID para evento sancionado.');
+    }
+    if (PokemonRulebook.eventoSancionado(tipoEvento) &&
+        PokemonRulebook.validarIdentificador(organizadorPlayerId) != null) {
+      throw ArgumentError('Informe o Player ID do organizador.');
+    }
+    if (quantidadeRodadas < 1) throw ArgumentError('Quantidade de rodadas inválida.');
+    if (tamanhoTopCut != 0 && tamanhoTopCut != 2 &&
+        tamanhoTopCut != 4 && tamanhoTopCut != 8) {
+      throw ArgumentError('Top Cut deve ser 0, 2, 4 ou 8.');
+    }
+  
     final codigo =
         await _gerarCodigoUnico();
 
@@ -36,6 +60,16 @@ class TorneioService {
       status: 'inscricoes',
       criadoPor: criadoPor,
       criadoEm: DateTime.now(),
+      sanctionId: sanctionId?.trim(),
+      organizadorNome: organizadorNome.trim(),
+      organizadorPlayerId: organizadorPlayerId?.trim(),
+      tipoEvento: tipoEvento,
+      formatoJogo: formatoJogo,
+      sistemaPareamento: sistemaPareamento,
+      temporada: temporada,
+      agrupamentoEtario: agrupamentoEtario,
+      tamanhoTopCut: tamanhoTopCut,
+      versaoRegras: 'play-pokemon-$temporada',
     );
 
     await torneioRef.set(
@@ -194,6 +228,11 @@ class TorneioService {
         if (rodadaAtual <
             quantidadeRodadas) {
           return 'rodadas_pendentes';
+        }
+
+        if ((dadosTorneio['tamanhoTopCut'] ?? 0) > 0 &&
+            dadosTorneio['topcutConcluido'] != true) {
+          return 'topcut_pendente';
         }
 
         final rodadaRef =

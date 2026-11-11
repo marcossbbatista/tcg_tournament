@@ -14,6 +14,9 @@ class ClassificacaoJogadorModel {
 
   final bool ativo;
   final int quantidadeByes;
+  final String divisaoEtaria;
+  final String podId;
+  final bool entradaTardia;
 
   ClassificacaoJogadorModel({
     required this.uid,
@@ -27,6 +30,9 @@ class ClassificacaoJogadorModel {
     required this.opponentOpponentWinPercentage,
     required this.ativo,
     required this.quantidadeByes,
+    this.divisaoEtaria = 'nao_informada',
+    this.podId = 'geral',
+    this.entradaTardia = false,
   });
 
   int get partidas =>

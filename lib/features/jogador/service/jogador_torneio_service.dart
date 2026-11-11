@@ -4,6 +4,7 @@ import '../../torneio/models/torneio_model.dart';
 import '../models/jogador_torneio_model.dart';
 import '../models/torneio_jogador_model.dart';
 import 'package:flutter/foundation.dart';
+import '../../torneio/rules/pokemon_rulebook.dart';
 
 class JogadorTorneioService {
   final FirebaseFirestore _firestore =
@@ -72,6 +73,109 @@ class JogadorTorneioService {
     );
 
     return 'pendente';
+  }
+
+  /// Cadastro de participante sem conta Firebase (inscrição presencial).
+  /// Usa um identificador previsível por POP ID para evitar duplicações manuais.
+  Future<void> cadastrarJogadorPresencial({
+    required String torneioId,
+    required String primeiroNome,
+    required String sobrenome,
+    required String pokemonPlayerId,
+    required DateTime dataNascimento,
+    String email = '',
+  }) async {
+    final torneioRef = _firestore.collection('tournaments').doc(torneioId);
+    final snapshot = await torneioRef.get();
+    if (!snapshot.exists) throw StateError('Torneio não encontrado.');
+    final torneio = TorneioModel.fromMap(torneioId, snapshot.data()!);
+    if (torneio.status == 'finalizado') throw StateError('Torneio finalizado.');
+    if (PokemonRulebook.validarIdentificador(pokemonPlayerId) != null) {
+      throw ArgumentError('Player ID inválido.');
+    }
+    if (torneio.status == 'em_andamento' &&
+        PokemonRulebook.eventoSancionado(torneio.tipoEvento) &&
+        torneio.rodadaAtual > 3) {
+      throw StateError('Inscrição tardia após a terceira rodada não permitida neste evento.');
+    }
+    final duplicados = await torneioRef.collection('players')
+        .where('pokemonPlayerId', isEqualTo: pokemonPlayerId.trim()).limit(1).get();
+    if (duplicados.docs.isNotEmpty) throw StateError('Player ID já inscrito.');
+    final uid = 'pop_${pokemonPlayerId.trim()}';
+    final doc = torneioRef.collection('players').doc(uid);
+    await _firestore.runTransaction((tx) async {
+      if ((await tx.get(doc)).exists) throw StateError('Jogador já inscrito.');
+      final lateEntry = torneio.status == 'em_andamento' ? torneio.rodadaAtual + 1 : null;
+      final jogador = JogadorTorneioModel(
+        uid: uid,
+        nome: '${primeiroNome.trim()} ${sobrenome.trim()}',
+        email: email.trim(),
+        status: 'aprovado',
+        pontos: 0,
+        ativo: true,
+        entrouEm: DateTime.now(),
+        primeiroNome: primeiroNome.trim(),
+        sobrenome: sobrenome.trim(),
+        pokemonPlayerId: pokemonPlayerId.trim(),
+        dataNascimento: dataNascimento,
+        divisaoEtaria: PokemonRulebook.divisaoEtaria(dataNascimento, torneio.temporada),
+        rodadaEntradaTardia: lateEntry,
+      );
+      tx.set(doc, jogador.toMap());
+    });
+  }
+
+  Future<void> atualizarDadosOficiais({
+    required String torneioId,
+    required String jogadorUid,
+    required String primeiroNome,
+    required String sobrenome,
+    required String pokemonPlayerId,
+    required DateTime dataNascimento,
+  }) async {
+    if (primeiroNome.trim().isEmpty || sobrenome.trim().isEmpty ||
+        PokemonRulebook.validarIdentificador(pokemonPlayerId) != null) {
+      throw ArgumentError('Preencha nome, sobrenome e Player ID válidos.');
+    }
+    final torneioRef = _firestore.collection('tournaments').doc(torneioId);
+    final torneioSnap = await torneioRef.get();
+    if (!torneioSnap.exists) throw StateError('Torneio não encontrado.');
+    final torneio = TorneioModel.fromMap(torneioId, torneioSnap.data()!);
+    if (torneio.status == 'finalizado') throw StateError('Torneio finalizado.');
+    final iguais = await torneioRef.collection('players')
+        .where('pokemonPlayerId', isEqualTo: pokemonPlayerId.trim()).get();
+    if (iguais.docs.any((d) => d.id != jogadorUid)) {
+      throw StateError('Player ID em uso por outro jogador.');
+    }
+    await torneioRef.collection('players').doc(jogadorUid).update({
+      'pokemonPlayerId': pokemonPlayerId.trim(),
+      'primeiroNome': primeiroNome.trim(),
+      'sobrenome': sobrenome.trim(),
+      'dataNascimento': Timestamp.fromDate(dataNascimento),
+      'divisaoEtaria': PokemonRulebook.divisaoEtaria(dataNascimento, torneio.temporada),
+    });
+  }
+
+  /// Drop somente entre rodadas, nunca durante uma rodada em andamento.
+  Future<void> registrarDesistencia({
+    required String torneioId,
+    required String jogadorUid,
+  }) async {
+    final torneioRef = _firestore.collection('tournaments').doc(torneioId);
+    final snapshot = await torneioRef.get();
+    if (!snapshot.exists) throw StateError('Torneio não encontrado.');
+    final torneio = TorneioModel.fromMap(torneioId, snapshot.data()!);
+    if (torneio.status != 'em_andamento') throw StateError('Torneio não está em andamento.');
+    final rodada = await torneioRef.collection('rounds')
+        .doc('${torneio.rodadaAtual}').get();
+    if (rodada.data()?['status'] != 'finalizada') {
+      throw StateError('Finalize a rodada atual antes de registrar uma desistência.');
+    }
+    await torneioRef.collection('players').doc(jogadorUid).update({
+      'ativo': false,
+      'rodadaDesistencia': torneio.rodadaAtual,
+      'desistiuEm': Timestamp.now(),
+    });
   }
 
   Stream<List<JogadorTorneioModel>>

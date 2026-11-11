@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
 
 import '../models/jogador_torneio_model.dart';
+import 'dados_jogador_dialog.dart';
 
 class GerenciarJogadoresPage extends StatelessWidget {
   final String torneioId;
@@ -92,12 +93,75 @@ class GerenciarJogadoresPage extends StatelessWidget {
     }
   }
 
+  Future<void> _editarOficiais(BuildContext context, JogadorTorneioModel jogador) async {
+    final dados = await showDialog<DadosJogadorPreenchidos>(
+      context: context, builder: (_) => DadosJogadorDialog(jogador: jogador));
+    if (dados == null || !context.mounted) return;
+    try {
+      await JogadorTorneioService().atualizarDadosOficiais(
+        torneioId: torneioId, jogadorUid: jogador.uid,
+        primeiroNome: dados.primeiroNome, sobrenome: dados.sobrenome,
+        pokemonPlayerId: dados.playerId, dataNascimento: dados.nascimento,
+      );
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Dados oficiais atualizados.')));
+    } catch (e) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível salvar: $e')));
+    }
+  }
+
+  Future<void> _cadastrarPresencial(BuildContext context) async {
+    final dados = await showDialog<DadosJogadorPreenchidos>(
+      context: context, builder: (_) => const DadosJogadorDialog());
+    if (dados == null || !context.mounted) return;
+    try {
+      await JogadorTorneioService().cadastrarJogadorPresencial(
+        torneioId: torneioId, primeiroNome: dados.primeiroNome,
+        sobrenome: dados.sobrenome, pokemonPlayerId: dados.playerId,
+        dataNascimento: dados.nascimento,
+      );
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Jogador inscrito.')));
+    } catch (e) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível cadastrar: $e')));
+    }
+  }
+
+  Future<void> _desistir(BuildContext context, JogadorTorneioModel jogador) async {
+    final confirma = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
+      title: const Text('Registrar desistência'),
+      content: Text('Marcar ${jogador.nome} como desistente após a rodada atual?'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirmar')),
+      ],
+    ));
+    if (confirma != true || !context.mounted) return;
+    try {
+      await JogadorTorneioService().registrarDesistencia(
+          torneioId: torneioId, jogadorUid: jogador.uid);
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Desistência registrada.')));
+    } catch (e) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível registrar: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final JogadorTorneioService service = JogadorTorneioService();
 
     return TcgTheme.wrap(Scaffold(
-      appBar: AppBar(title: const Text('Gerenciar jogadores')),
+      appBar: AppBar(
+        title: const Text('Gerenciar jogadores'),
+        actions: [IconButton(
+          tooltip: 'Inscrição presencial', icon: const Icon(Icons.person_add_alt_1),
+          onPressed: () => _cadastrarPresencial(context),
+        )],
+      ),
       body: StreamBuilder<List<JogadorTorneioModel>>(
         stream: service.listarJogadores(torneioId),
         builder: (context, snapshot) {
@@ -159,7 +223,11 @@ class GerenciarJogadoresPage extends StatelessWidget {
               if (aprovados.isEmpty)
                 const _ListaVazia(mensagem: 'Nenhum jogador aprovado.')
               else
-                ...aprovados.map((jogador) => _JogadorCard(jogador: jogador)),
+                ...aprovados.map((jogador) => _JogadorCard(
+                  jogador: jogador,
+                  onEditar: () => _editarOficiais(context, jogador),
+                  onDesistir: jogador.ativo ? () => _desistir(context, jogador) : null,
+                )),
 
               if (recusados.isNotEmpty) ...[
                 const SizedBox(height: 24),
@@ -211,12 +279,16 @@ class _JogadorCard extends StatelessWidget {
 
   final VoidCallback? onAprovar;
   final VoidCallback? onRecusar;
+  final VoidCallback? onEditar;
+  final VoidCallback? onDesistir;
 
   const _JogadorCard({
     required this.jogador,
     this.mostrarAcoes = false,
     this.onAprovar,
     this.onRecusar,
+    this.onEditar,
+    this.onDesistir,
   });
 
   String _statusFormatado() {
@@ -283,6 +355,23 @@ class _JogadorCard extends StatelessWidget {
               ),
             ],
 
+            if (jogador.pokemonPlayerId != null) ...[
+              const SizedBox(height: 6),
+              Text('Player ID: ${jogador.pokemonPlayerId} • ${jogador.divisaoEtaria ?? 'sem divisão'}'),
+            ],
+            if (!jogador.ativo) const Text('Desistente'),
+            if (onEditar != null) ...[
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, children: [
+                OutlinedButton.icon(onPressed: onEditar,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Dados oficiais')),
+                if (onDesistir != null)
+                  OutlinedButton.icon(onPressed: onDesistir,
+                      icon: const Icon(Icons.person_remove_outlined),
+                      label: const Text('Desistência')),
+              ]),
+            ],
             if (mostrarAcoes) ...[
               const SizedBox(height: 16),
 
