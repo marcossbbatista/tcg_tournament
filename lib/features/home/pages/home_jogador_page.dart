@@ -8,6 +8,7 @@ import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.
 
 import '../../../core/session/usuario_session.dart';
 import '../../auth/pages/login_page.dart';
+import '../../auth/pages/perfil_page.dart';
 import '../../auth/services/auth_service.dart';
 
 class HomeJogadorPage extends StatefulWidget {
@@ -60,6 +61,13 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
     );
   }
 
+  Future<void> _abrirPerfil() async {
+    await Navigator.push(context, MaterialPageRoute(
+      builder: (_) => const PerfilPage(),
+    ));
+    if (mounted) setState(() {});
+  }
+
   Future<void> _entrarTorneio() async {
     await Navigator.push(
       context,
@@ -105,6 +113,11 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
         title: const Text('Meus torneios'),
         actions: [
           IconButton(
+            tooltip: 'Meu perfil',
+            onPressed: _abrirPerfil,
+            icon: const Icon(Icons.account_circle_outlined),
+          ),
+          IconButton(
             tooltip: 'Atualizar',
             onPressed: _atualizarTorneios,
             icon: const Icon(Icons.refresh),
@@ -123,6 +136,16 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
           children: [
             TcgHero(title: 'Olá, ${usuario.nome}', subtitle: 'Acompanhe seus torneios e partidas.', icon: Icons.style_rounded),
             const SizedBox(height: 4),
+            if (!usuario.possuiDadosOficiais) ...[
+              Card(child: ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('Complete seu perfil para jogar'),
+                subtitle: const Text('Informe seu Pokémon Player ID e '
+                    'nascimento para participar de torneios.'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _abrirPerfil,
+              )),
+            ],
             Expanded(
               child: StreamBuilder<List<TorneioJogadorModel>>(
                 stream: _torneiosStream,

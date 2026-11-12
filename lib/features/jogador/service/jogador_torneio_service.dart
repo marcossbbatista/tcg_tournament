@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../torneio/models/torneio_model.dart';
+import '../../auth/models/usuario_model.dart';
 import '../models/jogador_torneio_model.dart';
 import '../models/torneio_jogador_model.dart';
 import 'package:flutter/foundation.dart';
@@ -36,19 +37,21 @@ class JogadorTorneioService {
 
   Future<String> solicitarParticipacao({
     required TorneioModel torneio,
-    required String uid,
-    required String nome,
-    required String email,
+    required UsuarioModel usuario,
   }) async {
     if (torneio.status != 'inscricoes') {
       return 'inscricoes_encerradas';
+    }
+
+    if (!usuario.possuiDadosOficiais) {
+      throw StateError('Complete os dados oficiais em Meu perfil antes de participar.');
     }
 
     final documento = _firestore
         .collection('tournaments')
         .doc(torneio.id)
         .collection('players')
-        .doc(uid);
+        .doc(usuario.uid);
 
     final existente = await documento.get();
 
@@ -58,14 +61,29 @@ class JogadorTorneioService {
       return dados?['status'] ?? 'pendente';
     }
 
+    // Impede inscrições com Player ID repetido no mesmo torneio.
+    final iguais = await documento.parent
+        .where('pokemonPlayerId', isEqualTo: usuario.pokemonPlayerId)
+        .limit(1).get();
+    if (iguais.docs.isNotEmpty) {
+      throw StateError('Este Player ID já está inscrito no torneio.');
+    }
+
     final jogador = JogadorTorneioModel(
-      uid: uid,
-      nome: nome,
-      email: email,
+      uid: usuario.uid,
+      nome: usuario.nome,
+      email: usuario.email,
       status: 'pendente',
       pontos: 0,
       ativo: true,
       entrouEm: DateTime.now(),
+      primeiroNome: usuario.primeiroNome,
+      sobrenome: usuario.sobrenome,
+      pokemonPlayerId: usuario.pokemonPlayerId,
+      dataNascimento: usuario.dataNascimento,
+      divisaoEtaria: PokemonRulebook.divisaoEtaria(
+        usuario.dataNascimento!, torneio.temporada,
+      ),
     );
 
     await documento.set(

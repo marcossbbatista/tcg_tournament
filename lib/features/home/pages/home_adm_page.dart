@@ -2,6 +2,7 @@ import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../auth/pages/login_page.dart';
+import '../../auth/pages/perfil_page.dart';
 import '../../auth/services/auth_service.dart';
 import '../../torneio/models/torneio_model.dart';
 import '../../torneio/pages/criar_torneio_page.dart';
@@ -10,8 +11,20 @@ import '../../../core/session/usuario_session.dart';
 import '../../torneio/pages/gerenciar_torneio_page.dart';
 import '../../torneio/pages/tom_tdf_page.dart';
 
-class HomeAdmPage extends StatelessWidget {
+class HomeAdmPage extends StatefulWidget {
   const HomeAdmPage({super.key});
+
+  @override
+  State<HomeAdmPage> createState() => _HomeAdmPageState();
+}
+
+class _HomeAdmPageState extends State<HomeAdmPage> {
+  Future<void> _abrirPerfil() async {
+    await Navigator.push(context, MaterialPageRoute(
+      builder: (_) => const PerfilPage(),
+    ));
+    if (mounted) setState(() {});
+  }
 
   Future<void> _logout(BuildContext context) async {
     await AuthService().logout();
@@ -77,6 +90,11 @@ Future<void> _gerenciarTorneio(
           'Meus torneios',
         ),
         actions: [
+          IconButton(
+            tooltip: 'Meu perfil',
+            onPressed: _abrirPerfil,
+            icon: const Icon(Icons.account_circle_outlined),
+          ),
           IconButton(
             tooltip: 'Sair',
             onPressed: () => _logout(context),

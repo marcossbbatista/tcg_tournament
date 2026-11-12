@@ -7,6 +7,7 @@ import '../../partida/models/partida_model.dart';
 import '../models/torneio_model.dart';
 import '../rules/classificacao_engine.dart';
 import '../rules/pokemon_rulebook.dart';
+import '../../jogador/service/jogador_perfil_tom_service.dart';
 import '../tdf/tom_tdf_codec.dart';
 
 class TomTdfExportacao {
@@ -237,8 +238,16 @@ class TomTdfService {
     final jogadores = <TomTdfJogador>[];
     final uidToPop = <String, String>{};
     final modelos = <JogadorTorneioModel>[];
-    for (final doc in jogadoresOrdenados) {
-      final j = JogadorTorneioModel.fromMap(doc.id, doc.data());
+    final perfilService = JogadorPerfilTomService(firestore: _db);
+    final modelosAtualizados = await perfilService.resolverTodos(
+      jogadores: [for (final doc in jogadoresOrdenados)
+        JogadorTorneioModel.fromMap(doc.id, doc.data())],
+      temporada: torneio.temporada,
+      avisos: avisos,
+    );
+    for (var indice = 0; indice < jogadoresOrdenados.length; indice++) {
+      final doc = jogadoresOrdenados[indice];
+      final j = modelosAtualizados[indice];
       final id = j.pokemonPlayerId?.trim() ?? '';
       if (!RegExp(r'^\d{5,12}$').hasMatch(id)) {
         throw StateError('Jogador ${j.nome} sem Player ID oficial válido.');

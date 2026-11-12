@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../jogador/models/jogador_torneio_model.dart';
+import '../../jogador/service/jogador_perfil_tom_service.dart';
 import '../../partida/models/partida_model.dart';
 import '../models/torneio_model.dart';
 import '../rules/pokemon_rulebook.dart';
@@ -45,8 +46,13 @@ class TomPreflightService {
     }
     final jogadoresDocs = await ref.collection('players')
         .where('status', isEqualTo: 'aprovado').get();
-    final jogadores = jogadoresDocs.docs
-        .map((d) => JogadorTorneioModel.fromMap(d.id, d.data())).toList();
+    final perfilService = JogadorPerfilTomService(firestore: _db);
+    final jogadores = await perfilService.resolverTodos(
+      jogadores: [for (final doc in jogadoresDocs.docs)
+        JogadorTorneioModel.fromMap(doc.id, doc.data())],
+      temporada: torneio.temporada,
+      avisos: avisos,
+    );
     if (jogadores.isEmpty) erros.add('Nenhum jogador aprovado.');
     if (oficial && jogadores.length < 4) {
       erros.add('Evento sancionado com menos de quatro jogadores aprovados.');

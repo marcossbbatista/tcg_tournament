@@ -225,7 +225,10 @@ class GerenciarJogadoresPage extends StatelessWidget {
               else
                 ...aprovados.map((jogador) => _JogadorCard(
                   jogador: jogador,
-                  onEditar: () => _editarOficiais(context, jogador),
+                  // Contas registradas editam estes campos em Meu perfil.
+                  // Inscritos presenciais não possuem conta: mantêm edição aqui.
+                  onEditar: jogador.uid.startsWith('pop_')
+                      ? () => _editarOficiais(context, jogador) : null,
                   onDesistir: jogador.ativo ? () => _desistir(context, jogador) : null,
                 )),
 
@@ -360,12 +363,13 @@ class _JogadorCard extends StatelessWidget {
               Text('Player ID: ${jogador.pokemonPlayerId} • ${jogador.divisaoEtaria ?? 'sem divisão'}'),
             ],
             if (!jogador.ativo) const Text('Desistente'),
-            if (onEditar != null) ...[
+            if (onEditar != null || onDesistir != null) ...[
               const SizedBox(height: 8),
               Wrap(spacing: 8, children: [
-                OutlinedButton.icon(onPressed: onEditar,
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Dados oficiais')),
+                if (onEditar != null)
+                  OutlinedButton.icon(onPressed: onEditar,
+                      icon: const Icon(Icons.edit_outlined),
+                      label: const Text('Dados oficiais')),
                 if (onDesistir != null)
                   OutlinedButton.icon(onPressed: onDesistir,
                       icon: const Icon(Icons.person_remove_outlined),

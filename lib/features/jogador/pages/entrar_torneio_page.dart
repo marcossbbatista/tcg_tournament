@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
 
 import '../../../core/session/usuario_session.dart';
+import '../../auth/pages/perfil_page.dart';
 import '../../torneio/models/torneio_model.dart';
 
 class EntrarTorneioPage extends StatefulWidget {
@@ -82,6 +83,29 @@ class _EntrarTorneioPageState extends State<EntrarTorneioPage> {
       return;
     }
 
+    if (!usuario.possuiDadosOficiais) {
+      final completar = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Complete seu perfil'),
+          content: const Text('Informe primeiro nome, sobrenome, '
+              'Pokémon Player ID e nascimento para participar de torneios TOM.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false),
+                child: const Text('Agora não')),
+            FilledButton(onPressed: () => Navigator.pop(context, true),
+                child: const Text('Meu perfil')),
+          ],
+        ),
+      );
+      if (completar == true && mounted) {
+        await Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const PerfilPage(),
+        ));
+      }
+      return;
+    }
+
     setState(() {
       _solicitando = true;
     });
@@ -89,9 +113,7 @@ class _EntrarTorneioPageState extends State<EntrarTorneioPage> {
     try {
       final resultado = await _service.solicitarParticipacao(
         torneio: torneio,
-        uid: usuario.uid,
-        nome: usuario.nome,
-        email: usuario.email,
+        usuario: usuario,
       );
 
       if (!mounted) return;
@@ -129,7 +151,7 @@ class _EntrarTorneioPageState extends State<EntrarTorneioPage> {
     } catch (e) {
       if (!mounted) return;
 
-      _mostrarMensagem('Não foi possível solicitar a participação.');
+      _mostrarMensagem('Não foi possível solicitar a participação: $e');
     } finally {
       if (mounted) {
         setState(() {

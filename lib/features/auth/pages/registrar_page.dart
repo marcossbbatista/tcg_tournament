@@ -6,6 +6,7 @@ import 'package:tcg_tournament/features/home/pages/home_jogador_page.dart';
 import '../services/auth_service.dart';
 import '../services/usuario_service.dart';
 import '../models/usuario_model.dart';
+import '../../torneio/rules/pokemon_rulebook.dart';
 
 class RegistrarPage extends StatefulWidget {
   const RegistrarPage({super.key});
@@ -17,7 +18,10 @@ class RegistrarPage extends StatefulWidget {
 class _RegistrarPageState extends State<RegistrarPage> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nomeController = TextEditingController();
+  final _primeiroNomeController = TextEditingController();
+  final _sobrenomeController = TextEditingController();
+  final _playerIdController = TextEditingController();
+  DateTime? _dataNascimento;
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
 
@@ -29,7 +33,9 @@ class _RegistrarPageState extends State<RegistrarPage> {
 
   @override
   void dispose() {
-    _nomeController.dispose();
+    _primeiroNomeController.dispose();
+    _sobrenomeController.dispose();
+    _playerIdController.dispose();
     _emailController.dispose();
     _senhaController.dispose();
     super.dispose();
@@ -42,10 +48,17 @@ class _RegistrarPageState extends State<RegistrarPage> {
       return;
     }
 
+    if (_dataNascimento == null) {
+      _mostrarMensagem('Informe a data de nascimento.');
+      return;
+    }
+
     setState(() => _carregando = true);
 
     try {
-      final nome = _nomeController.text.trim();
+      final primeiroNome = _primeiroNomeController.text.trim();
+      final sobrenome = _sobrenomeController.text.trim();
+      final nome = '$primeiroNome $sobrenome';
       final email = _emailController.text.trim();
       final senha = _senhaController.text;
 
@@ -70,6 +83,10 @@ class _RegistrarPageState extends State<RegistrarPage> {
         nome: nome,
         email: email,
         tipo: 'jogador',
+        primeiroNome: primeiroNome,
+        sobrenome: sobrenome,
+        pokemonPlayerId: _playerIdController.text.trim(),
+        dataNascimento: _dataNascimento,
       );
 
       await _usuarioService.criarUsuario(usuario);
@@ -169,25 +186,66 @@ class _RegistrarPageState extends State<RegistrarPage> {
 
                     const SizedBox(height: 32),
 
-                    // Nome
+                    // Nome oficial para o TOM.
                     TextFormField(
-                      controller: _nomeController,
+                      controller: _primeiroNomeController,
                       textCapitalization: TextCapitalization.words,
                       decoration: const InputDecoration(
-                        labelText: 'Nome',
+                        labelText: 'Primeiro nome',
                         prefixIcon: Icon(Icons.person_outline),
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Informe seu nome.';
-                        }
+                      validator: (valor) => valor == null || valor.trim().isEmpty
+                          ? 'Informe seu primeiro nome.' : null,
+                    ),
 
-                        if (value.trim().length < 2) {
-                          return 'Informe um nome válido.';
-                        }
+                    const SizedBox(height: 16),
 
-                        return null;
+                    TextFormField(
+                      controller: _sobrenomeController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Sobrenome',
+                        prefixIcon: Icon(Icons.person_outline),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (valor) => valor == null || valor.trim().isEmpty
+                          ? 'Informe seu sobrenome.' : null,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _playerIdController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Pokémon Player ID (POP ID)',
+                        prefixIcon: Icon(Icons.confirmation_number_outlined),
+                        border: OutlineInputBorder(),
+                        helperText: 'De 5 a 12 dígitos.',
+                      ),
+                      validator: PokemonRulebook.validarIdentificador,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.cake_outlined),
+                      label: Text(_dataNascimento == null
+                          ? 'Selecionar data de nascimento'
+                          : 'Nascimento: ${_dataNascimento!.day.toString().padLeft(2, '0')}/'
+                            '${_dataNascimento!.month.toString().padLeft(2, '0')}/'
+                            '${_dataNascimento!.year}'),
+                      onPressed: () async {
+                        final data = await showDatePicker(
+                          context: context,
+                          initialDate: _dataNascimento ?? DateTime(2008),
+                          firstDate: DateTime(1920),
+                          lastDate: DateTime.now(),
+                        );
+                        if (data != null && mounted) {
+                          setState(() => _dataNascimento = data);
+                        }
                       },
                     ),
 
