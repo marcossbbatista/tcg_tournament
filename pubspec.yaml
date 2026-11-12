@@ -39,7 +39,7 @@ dependencies:
   cloud_firestore: ^6.10.0
   google_sign_in: ^7.2.0
   xml: ^6.6.1
-  file_picker: ^11.0.1
+  file_picker: ^12.3.0
   flutter_localizations:
     sdk: flutter
 

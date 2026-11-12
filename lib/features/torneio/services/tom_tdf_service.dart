@@ -335,7 +335,7 @@ class TomTdfService {
     final classificacaoPartidas = <PartidaModel>[];
     final assinaturaList = <String>[];
     for (final rd in rodadasDocs.docs) {
-      final numero = (rd.data()['numero'] as num?)?.toInt() ?? int.tryParse(rd.id) ?? 0;
+      final numero = (rd.data()['numero'] as int?)?.toInt() ?? int.tryParse(rd.id) ?? 0;
       if (numero < 1) continue;
       rodadasInfo[numero] = rd.data();
       final partidasSnap = await rd.reference.collection('matches').get();
@@ -412,8 +412,8 @@ class TomTdfService {
               'Importe uma referência TOM contendo Top Cut primeiro.');
         }
         final pares = porRodada[num]!..sort((a, b) {
-          final ordemA = (a.$2['tomPosition'] as num?)?.toInt();
-          final ordemB = (b.$2['tomPosition'] as num?)?.toInt();
+          final ordemA = (a.$2['tomPosition'] as int?)?.toInt();
+          final ordemB = (b.$2['tomPosition'] as int?)?.toInt();
           if (ordemA != null && ordemB != null) return ordemA.compareTo(ordemB);
           return a.$1.mesa.compareTo(b.$1.mesa);
         });

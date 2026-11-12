@@ -33,14 +33,12 @@ class _TomTdfPageState extends State<TomTdfPage> {
   Future<void> _selecionarArquivo() async {
     setState(() { _ocupado = true; _erro = null; _importacao = null; });
     try {
-      final arquivos = await FilePicker.pickFiles(
+      final arquivo = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['tdf', 'xml'],
-        withData: true,
       );
-      if (arquivos == null || arquivos.files.isEmpty) return;
-      final bytes = arquivos.files.single.bytes;
-      if (bytes == null) throw StateError('Não foi possível ler o arquivo selecionado.');
+      if (arquivo == null) return;
+      final bytes = await arquivo.readAsBytes();
       if (bytes.length > 5 * 1024 * 1024) {
         throw const FormatException('TDF maior que 5 MB.');
       }
