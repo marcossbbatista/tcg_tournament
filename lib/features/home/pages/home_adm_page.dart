@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -73,11 +74,11 @@ Future<void> _gerenciarTorneio(
 
     if (usuario == null) {
       return TcgTheme.wrap(const Scaffold(
-        body: Center(
+        body: ResponsiveBody(maxWidth: 1080, child: Center(
           child: Text(
             'Usuário não identificado.',
           ),
-        ),
+        )),
       ));
     }
 
@@ -104,7 +105,7 @@ Future<void> _gerenciarTorneio(
           ),
         ],
       ),
-      body: Padding(
+      body: ResponsiveBody(maxWidth: 1080, child: Padding(
         padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
         child: Column(
           crossAxisAlignment:
@@ -156,7 +157,8 @@ Future<void> _gerenciarTorneio(
                     );
                   }
 
-                  return ListView.builder(
+                  return ResponsiveTournamentGrid(
+                    padding: const EdgeInsets.only(bottom: 80),
                     itemCount: torneios.length,
                     itemBuilder: (
                       context,
@@ -184,7 +186,7 @@ Future<void> _gerenciarTorneio(
             ),
           ],
         ),
-      ),
+      )),
       floatingActionButton:
           FloatingActionButton.extended(
         onPressed: () =>

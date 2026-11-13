@@ -30,6 +30,15 @@ class TcgTournamentApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'TCG Tournament',
       theme: TcgTheme.data(),
+      builder: (context, child) => ColoredBox(
+        color: TcgTheme.background,
+        child: SafeArea(
+          top: false,
+          bottom: true,
+          minimum: const EdgeInsets.only(bottom: 16),
+          child: child ?? const SizedBox.shrink(),
+        ),
+      ),
       home: const LoginPage(),
     );
   }

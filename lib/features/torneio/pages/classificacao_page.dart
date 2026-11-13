@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -71,7 +72,7 @@ class _ClassificacaoPageState
               : 'Classificação',
         ),
       ),
-      body: FutureBuilder<
+      body: ResponsiveBody(maxWidth: 1080, child: FutureBuilder<
           List<ClassificacaoJogadorModel>>(
         future: _classificacao,
         builder: (
@@ -176,7 +177,7 @@ class _ClassificacaoPageState
             ),
           );
         },
-      ),
+      )),
     ));
   }
 }

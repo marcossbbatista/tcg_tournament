@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -33,11 +34,11 @@ class _TorneioJogadorPageState
 
     if (usuario == null) {
       return TcgTheme.wrap(const Scaffold(
-        body: Center(
+        body: ResponsiveBody(maxWidth: 1080, child: Center(
           child: Text(
             'Usuário não identificado.',
           ),
-        ),
+        )),
       ));
     }
 
@@ -45,15 +46,17 @@ class _TorneioJogadorPageState
       appBar: AppBar(
         title: Text(
           torneio.nome,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
+      body: ResponsiveBody(maxWidth: 1080, child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           TcgHero(title: torneio.nome, subtitle: 'Confira sua inscrição e acompanhe sua partida.', icon: Icons.emoji_events_rounded),
           Card(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment:
                     CrossAxisAlignment.start,
@@ -166,7 +169,7 @@ class _TorneioJogadorPageState
               },
             ),
         ],
-      ),
+      )),
     ));
   }
 

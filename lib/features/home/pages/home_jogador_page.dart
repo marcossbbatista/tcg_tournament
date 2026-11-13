@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 
 import 'package:flutter/material.dart';
@@ -102,9 +103,9 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
 
     if (usuario == null) {
       return TcgTheme.wrap(const Scaffold(
-        body: Center(
+        body: ResponsiveBody(maxWidth: 1080, child: Center(
           child: Text('Usuário não identificado.'),
-        ),
+        )),
       ));
     }
 
@@ -129,7 +130,7 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
           ),
         ],
       ),
-      body: Padding(
+      body: ResponsiveBody(maxWidth: 1080, child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -192,7 +193,8 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 60),
-                    child: ListView.builder(
+                    child: ResponsiveTournamentGrid(
+                      padding: const EdgeInsets.only(bottom: 24),
                       itemCount: torneios.length,
                       itemBuilder: (context, index) {
                         final item = torneios[index];
@@ -213,7 +215,7 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
             ),
           ],
         ),
-      ),
+      )),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _entrarTorneio,
         icon: const Icon(Icons.add),

@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -135,7 +136,7 @@ class _TomTdfPageState extends State<TomTdfPage> {
   @override
   Widget build(BuildContext context) => TcgTheme.wrap(Scaffold(
     appBar: AppBar(title: Text(_modoImportacao ? 'Importar arquivo TOM' : 'Exportar arquivo TOM')),
-    body: ListView(padding: const EdgeInsets.all(16), children: [
+    body: ResponsiveBody(maxWidth: 1080, child: ListView(padding: const EdgeInsets.all(16), children: [
       TcgHero(
         title: _modoImportacao ? 'Importar torneio .tdf' : 'Exportar torneio .tdf',
         subtitle: _modoImportacao
@@ -193,7 +194,7 @@ class _TomTdfPageState extends State<TomTdfPage> {
       const Text('A estrutura XML segue a amostra TOM 1.70. '
           'Não é uma certificação de compatibilidade com TOM ou Play! Tools. '
           'O sistema não substitui a finalização no programa oficial.'),
-    ]),
+    ])),
   ));
 
   Widget _resumoImportacao(TomTdfDocumento doc) => Card(
