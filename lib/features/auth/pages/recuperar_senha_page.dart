@@ -96,7 +96,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
                   const Icon(
                     Icons.lock_reset_rounded,
                     size: 75,
-                    color: TcgTheme.blue,
+                    color: TcgTheme.orange,
                   ),
 
                   const SizedBox(height: 24),

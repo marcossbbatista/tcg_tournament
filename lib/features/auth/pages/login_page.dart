@@ -187,9 +187,8 @@ Future<void> _processarLogin(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const TcgHero(title: 'TCG Tournament', subtitle: 'Organize e acompanhe seus torneios', icon: Icons.style_rounded),
+                const TcgHero(title: 'PokéDuelix', subtitle: 'Organize e acompanhe seus torneios',   imageAsset: 'assets/images/trasgo_logo.jpg'),
                 const SizedBox(height: 32),
-
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
