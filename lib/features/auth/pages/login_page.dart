@@ -303,7 +303,16 @@ Future<void> _processarLogin(
                   width: double.infinity,
                   height: 50,
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed:  _carregando
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RegistrarPage(),
+                            ),
+                          );
+                        },
                     child: TextButton(
                   onPressed: _carregando
                       ? null
