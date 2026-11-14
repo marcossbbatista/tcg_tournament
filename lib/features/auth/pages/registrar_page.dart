@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tcg_tournament/core/session/usuario_session.dart';
@@ -145,7 +146,7 @@ class _RegistrarPageState extends State<RegistrarPage> {
       appBar: AppBar(
         title: const Text('Criar conta'),
       ),
-      body: SafeArea(
+      body: ResponsiveBody(maxWidth: 720, child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -345,7 +346,7 @@ class _RegistrarPageState extends State<RegistrarPage> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

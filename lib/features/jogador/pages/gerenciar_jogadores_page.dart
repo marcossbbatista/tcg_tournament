@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
@@ -162,7 +163,7 @@ class GerenciarJogadoresPage extends StatelessWidget {
           onPressed: () => _cadastrarPresencial(context),
         )],
       ),
-      body: StreamBuilder<List<JogadorTorneioModel>>(
+      body: ResponsiveBody(maxWidth: 1080, child: StreamBuilder<List<JogadorTorneioModel>>(
         stream: service.listarJogadores(torneioId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -244,7 +245,7 @@ class GerenciarJogadoresPage extends StatelessWidget {
             ],
           );
         },
-      ),
+      )),
     ));
   }
 }

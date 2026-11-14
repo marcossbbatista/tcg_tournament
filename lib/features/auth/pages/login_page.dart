@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 
 import 'package:flutter/material.dart';
@@ -180,7 +181,7 @@ Future<void> _processarLogin(
       appBar: AppBar(
         title: const Text('Login'),
       ),
-      body: SafeArea(
+      body: ResponsiveBody(maxWidth: 720, child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(30),
@@ -346,7 +347,7 @@ Future<void> _processarLogin(
             ),
           ),
         ),
-      ),
+      )),
     ));
   }
 }

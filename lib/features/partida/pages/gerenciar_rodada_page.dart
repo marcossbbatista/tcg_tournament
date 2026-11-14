@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -219,7 +220,7 @@ class GerenciarRodadaPage extends StatelessWidget {
 
     return TcgTheme.wrap(Scaffold(
       appBar: AppBar(title: Text('Rodada $rodada')),
-      body: StreamBuilder<String?>(
+      body: ResponsiveBody(maxWidth: 1080, child: StreamBuilder<String?>(
         stream: rodadaService.observarStatusRodada(
           torneioId: torneioId,
           rodada: rodada,
@@ -436,7 +437,7 @@ class GerenciarRodadaPage extends StatelessWidget {
             },
           );
         },
-      ),
+      )),
     ));
   }
 }
@@ -481,7 +482,8 @@ class _StatusRodada extends StatelessWidget {
 
         const SizedBox(width: 8),
 
-        Text(texto, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Flexible(child: Text(texto,
+          style: const TextStyle(fontWeight: FontWeight.w600))),
       ],
     );
   }

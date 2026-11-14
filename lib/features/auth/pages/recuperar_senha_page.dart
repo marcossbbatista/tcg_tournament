@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -83,7 +84,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
       appBar: AppBar(
         title: const Text('Recuperar senha'),
       ),
-      body: Center(
+      body: ResponsiveBody(maxWidth: 720, child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
@@ -165,7 +166,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

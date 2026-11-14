@@ -48,8 +48,8 @@ class _DadosJogadorDialogState extends State<DadosJogadorDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: Text(widget.jogador == null ? 'Inscrição presencial' : 'Dados oficiais do jogador'),
-    content: SizedBox(
-      width: 400,
+    content: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 400),
       child: Form(
         key: _form,
         child: SingleChildScrollView(

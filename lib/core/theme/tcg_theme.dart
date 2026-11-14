@@ -234,75 +234,80 @@ class TcgHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: TcgTheme.gradient,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33F47B16),
-            blurRadius: 18,
-            offset: Offset(0, 8),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compacto = constraints.maxWidth < 390;
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 20),
+          padding: EdgeInsets.all(compacto ? 16 : 22),
+          decoration: BoxDecoration(
+            gradient: TcgTheme.gradient,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33F47B16),
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFFFFF1E3),
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Imagem ou ícone
-          Container(
-            width: 76,
-            height: 76,
-            padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: const Color(0x33FFFFFF),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: imageAsset != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.asset(
-                      imageAsset!,
-                      fit: BoxFit.cover,
-                      width: 76,
-                      height: 76,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
-                  )
-                : Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 34,
-                  ),
+                    const SizedBox(height: 7),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFFFFF1E3),
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: compacto ? 8 : 12),
+
+              // Imagem ou ícone
+              Container(
+                width: compacto ? 46 : 76,
+                height: compacto ? 46 : 76,
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: const Color(0x33FFFFFF),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: imageAsset != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.asset(
+                          imageAsset!,
+                          fit: BoxFit.cover,
+                          width: compacto ? 46 : 76,
+                          height: compacto ? 46 : 76,
+                        ),
+                      )
+                    : Icon(
+                        icon,
+                        color: Colors.white,
+                        size: compacto ? 26 : 34,
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -480,25 +485,26 @@ class TcgTournamentTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            Row(
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
               children: [
                 TcgStatusBadge(status: status),
-                const Spacer(),
-                if (pontos != null) ...[
-                  const Icon(
-                    Icons.emoji_events_rounded,
-                    color: TcgTheme.orange,
-                    size: 17,
+                if (pontos != null)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.emoji_events_rounded,
+                        color: TcgTheme.orange, size: 17),
+                      const SizedBox(width: 5),
+                      Text('$pontos pts', style: const TextStyle(
+                        color: TcgTheme.orangeDark,
+                        fontWeight: FontWeight.w800,
+                      )),
+                    ],
                   ),
-                  const SizedBox(width: 5),
-                  Text(
-                    '$pontos pts',
-                    style: const TextStyle(
-                      color: TcgTheme.orangeDark,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
               ],
             ),
             const SizedBox(height: 13),

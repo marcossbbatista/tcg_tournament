@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
@@ -135,13 +136,13 @@ class GerenciarTorneioPage extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
           return TcgTheme.wrap(const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: ResponsiveBody(maxWidth: 1080, child: Center(child: CircularProgressIndicator())),
           ));
         }
 
         if (snapshot.hasError) {
           return TcgTheme.wrap(const Scaffold(
-            body: Center(child: Text('Não foi possível carregar o torneio.')),
+            body: ResponsiveBody(maxWidth: 1080, child: Center(child: Text('Não foi possível carregar o torneio.'))),
           ));
         }
 
@@ -156,18 +157,19 @@ class GerenciarTorneioPage extends StatelessWidget {
     final JogadorTorneioService jogadorService = JogadorTorneioService();
 
     return TcgTheme.wrap(Scaffold(
-      appBar: AppBar(title: Text(torneioAtual.nome)),
-      body: SafeArea(
+      appBar: AppBar(title: Text(torneioAtual.nome,
+        maxLines: 1, overflow: TextOverflow.ellipsis)),
+      body: ResponsiveBody(maxWidth: 1080, child: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TcgHero(title: torneioAtual.nome, subtitle: 'Acompanhe participantes, rodadas e classificação.', icon: Icons.emoji_events_rounded),
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -301,7 +303,7 @@ class GerenciarTorneioPage extends StatelessWidget {
             
                     return Card(
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
+                        padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
                             Row(
@@ -394,7 +396,7 @@ class GerenciarTorneioPage extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )),
     ));
   }
 }
@@ -408,7 +410,7 @@ class _CardTorneioNaoIniciado extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             const Icon(Icons.emoji_events_outlined, size: 42),
@@ -697,7 +699,7 @@ class _CardRodadaAtual extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             const Icon(Icons.sports_esports, size: 42),
@@ -890,7 +892,7 @@ class _ResumoParticipantes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border.all(color: Theme.of(context).dividerColor),
         borderRadius: BorderRadius.circular(12),

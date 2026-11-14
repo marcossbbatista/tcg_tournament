@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -488,10 +489,10 @@ class _MontarPrimeiraRodadaPageState
   Widget build(BuildContext context) {
     if (_carregando) {
       return TcgTheme.wrap(const Scaffold(
-        body: Center(
+        body: ResponsiveBody(maxWidth: 1080, child: Center(
           child:
               CircularProgressIndicator(),
-        ),
+        )),
       ));
     }
 
@@ -501,7 +502,7 @@ class _MontarPrimeiraRodadaPageState
           'Montar Rodada 1',
         ),
       ),
-      body: ListView(
+      body: ResponsiveBody(maxWidth: 1080, child: ListView(
         padding:
             const EdgeInsets.all(16),
         children: [
@@ -660,7 +661,7 @@ class _MontarPrimeiraRodadaPageState
             ),
           ),
         ],
-      ),
+      )),
     ));
   }
 }

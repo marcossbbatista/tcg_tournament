@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/tcg_theme.dart';
 import '../services/tom_preflight_service.dart';
@@ -9,7 +10,7 @@ class TomPreflightPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => TcgTheme.wrap(Scaffold(
     appBar: AppBar(title: const Text('Validação para TOM')),
-    body: FutureBuilder<TomPreflightResult>(
+    body: ResponsiveBody(maxWidth: 1080, child: FutureBuilder<TomPreflightResult>(
       future: TomPreflightService().validar(torneioId),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -43,6 +44,6 @@ class TomPreflightPage extends StatelessWidget {
               'A validação final deve ocorrer no TOM oficial.'),
         ]);
       },
-    ),
+    )),
   ));
 }

@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -176,7 +177,7 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
       appBar: AppBar(
         title: const Text('Criar torneio'),
       ),
-      body: SafeArea(
+      body: ResponsiveBody(maxWidth: 720, child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Form(
@@ -388,7 +389,7 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
             ),
           ),
         ),
-      ),
+      )),
     ));
   }
 }

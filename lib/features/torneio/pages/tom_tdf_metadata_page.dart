@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -113,7 +114,7 @@ class _TomTdfMetadataPageState extends State<TomTdfMetadataPage> {
   @override
   Widget build(BuildContext context) => TcgTheme.wrap(Scaffold(
     appBar: AppBar(title: const Text('Dados oficiais TOM')),
-    body: _carregando ? const Center(child: CircularProgressIndicator()) :
+    body: ResponsiveBody(maxWidth: 720, child: _carregando ? const Center(child: CircularProgressIndicator()) :
       _campos.isEmpty ? Center(child: Text(_erro ?? 'Não foi possível carregar.')) :
       Form(key: _formKey, child: ListView(padding: const EdgeInsets.all(16), children: [
         const TcgHero(title: 'Metadados do evento',
@@ -133,6 +134,6 @@ class _TomTdfMetadataPageState extends State<TomTdfMetadataPage> {
         const SizedBox(height: 12),
         FilledButton.icon(onPressed: _salvando ? null : _salvar,
           icon: const Icon(Icons.save_outlined), label: const Text('Salvar dados TOM')),
-      ])),
+      ]))),
   ));
 }

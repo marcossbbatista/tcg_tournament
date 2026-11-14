@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/session/usuario_session.dart';
@@ -145,7 +146,7 @@ class _PerfilPageState extends State<PerfilPage> {
   Widget build(BuildContext context) {
     return TcgTheme.wrap(Scaffold(
       appBar: AppBar(title: const Text('Meu perfil')),
-      body: _carregando
+      body: ResponsiveBody(maxWidth: 720, child: _carregando
           ? const Center(child: CircularProgressIndicator())
           : _usuario == null
               ? Center(child: Padding(
@@ -233,7 +234,7 @@ class _PerfilPageState extends State<PerfilPage> {
                       ),
                     ),
                   )),
-                ),
+                )),
     ));
   }
 }

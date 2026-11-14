@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.dart';
@@ -184,7 +185,7 @@ class _EntrarTorneioPageState extends State<EntrarTorneioPage> {
   Widget build(BuildContext context) {
     return TcgTheme.wrap(Scaffold(
       appBar: AppBar(title: const Text('Entrar em torneio')),
-      body: SingleChildScrollView(
+      body: ResponsiveBody(maxWidth: 720, child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -240,7 +241,7 @@ class _EntrarTorneioPageState extends State<EntrarTorneioPage> {
             ],
           ],
         ),
-      ),
+      )),
     ));
   }
 }
@@ -282,16 +283,13 @@ class _TorneioEncontradoCard extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            Row(
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Icon(Icons.sports_esports),
-
-                const SizedBox(width: 8),
-
                 Text(torneio.formato.toUpperCase()),
-
-                const SizedBox(width: 16),
-
                 Text('${torneio.quantidadeRodadas} rodadas'),
               ],
             ),
