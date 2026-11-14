@@ -20,184 +20,188 @@ class HomeAdmPage extends StatefulWidget {
 }
 
 class _HomeAdmPageState extends State<HomeAdmPage> {
+  final TorneioService _torneioService = TorneioService();
+
   Future<void> _abrirPerfil() async {
-    await Navigator.push(context, MaterialPageRoute(
-      builder: (_) => const PerfilPage(),
-    ));
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PerfilPage()),
+    );
     if (mounted) setState(() {});
   }
 
-  Future<void> _logout(BuildContext context) async {
+  Future<void> _logout() async {
     await AuthService().logout();
 
     UsuarioSession.limpar();
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const LoginPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const LoginPage()),
       (route) => false,
     );
   }
 
-  Future<void> _criarTorneio(
-    BuildContext context,
-  ) async {
+  Future<void> _criarTorneio() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CriarTorneioPage()),
+    );
+  }
+
+  Future<void> _gerenciarTorneio(TorneioModel torneio) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const CriarTorneioPage(),
+        builder: (_) => GerenciarTorneioPage(torneio: torneio),
       ),
     );
   }
 
-Future<void> _gerenciarTorneio(
-  BuildContext context,
-  TorneioModel torneio,
-) async {
-  await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => GerenciarTorneioPage(
-        torneio: torneio,
-      ),
-    ),
-  );
-}
+  void _importarTdf() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TomTdfPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final usuario = UsuarioSession.usuario;
 
     if (usuario == null) {
-      return TcgTheme.wrap(const Scaffold(
-        body: ResponsiveBody(maxWidth: 1080, child: Center(
-          child: Text(
-            'Usuário não identificado.',
-          ),
-        )),
-      ));
+      return TcgTheme.wrap(
+        const Scaffold(
+          body: Center(child: Text('Usuário não identificado.')),
+        ),
+      );
     }
 
-    final TorneioService torneioService =
-        TorneioService();
-
-    return TcgTheme.wrap(Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Meus torneios',
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Meu perfil',
-            onPressed: _abrirPerfil,
-            icon: const Icon(Icons.account_circle_outlined),
-          ),
-          IconButton(
-            tooltip: 'Sair',
-            onPressed: () => _logout(context),
-            icon: const Icon(
-              Icons.logout,
-            ),
-          ),
-        ],
-      ),
-      body: ResponsiveBody(maxWidth: 1080, child: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 60),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.stretch,
-          children: [
-            TcgHero(title: 'Olá, ${usuario.nome}', subtitle: 'Gerencie seus torneios e acompanhe as partidas.', icon: Icons.dashboard_customize_rounded),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const TomTdfPage())),
-              icon: const Icon(Icons.file_open_outlined),
-              label: const Text('Importar torneio do TOM (.tdf)'),
-            ),
-            const SizedBox(height: 4),
-            Expanded(
-              child: StreamBuilder<List<TorneioModel>>(
-                stream:
-                    torneioService.listarTorneiosDoAdm(
-                  usuario.uid,
-                ),
-                builder: (
-                  context,
-                  snapshot,
-                ) {
-                  if (snapshot.connectionState ==
-                      ConnectionState.waiting) {
-                    return const Center(
-                      child:
-                          CircularProgressIndicator(),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    return const Center(
-                      child: Text(
-                        'Não foi possível carregar os torneios.',
-                      ),
-                    );
-                  }
-
-                  final torneios =
-                      snapshot.data ?? [];
-
-                  if (torneios.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Você ainda não possui torneios.',
-                      ),
-                    );
-                  }
-
-                  return ResponsiveTournamentGrid(
-                    padding: const EdgeInsets.only(bottom: 80),
-                    itemCount: torneios.length,
-                    itemBuilder: (
-                      context,
-                      index,
-                    ) {
-                      final torneio =
-                          torneios[index];
-
-                      return TcgTournamentTile(
-                        nome: torneio.nome,
-                        data: torneio.dataHora,
-                        formato: torneio.formato,
-                        status: torneio.status,
-                        buttonText: 'Gerenciar',
-                        onTap: () =>
-                            _gerenciarTorneio(
-                          context,
-                          torneio,
+    return TcgTheme.wrap(
+      Scaffold(
+        backgroundColor: TcgTheme.fundo,
+        body: TcgBackground(
+          child: SafeArea(
+            bottom: false,
+            child: ResponsiveBody(
+              maxWidth: 1080,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TcgCurvedHeader(
+                    saudacao: 'Olá, ${usuario.nome}',
+                    titulo: 'Meus torneios',
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Image.asset(
+                          'assets/images/pokeduelix_logo.png',
+                          width: 32,
+                          height: 32,
                         ),
-                      );
-                    },
-                  );
-                },
+                      ),
+                      IconButton(
+                        tooltip: 'Meu perfil',
+                        onPressed: _abrirPerfil,
+                        icon: const Icon(
+                          Icons.account_circle_outlined,
+                          color: Colors.white,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Sair',
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout, color: Colors.white),
+                      ),
+                    ],
+                  ),
+
+                  // Importar .tdf
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: TcgGlassCard(
+                      onTap: _importarTdf,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.file_open_outlined,
+                              color: TcgTheme.verde),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Importar torneio do TOM (.tdf)',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          Icon(Icons.chevron_right, color: Colors.white70),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Lista de torneios
+                  Expanded(
+                    child: StreamBuilder<List<TorneioModel>>(
+                      stream: _torneioService.listarTorneiosDoAdm(usuario.uid),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        if (snapshot.hasError) {
+                          return const Center(
+                            child: Text(
+                              'Não foi possível carregar os torneios.',
+                            ),
+                          );
+                        }
+
+                        final torneios = snapshot.data ?? [];
+
+                        if (torneios.isEmpty) {
+                          return const Center(
+                            child: Text('Você ainda não possui torneios.'),
+                          );
+                        }
+
+                        return ResponsiveTournamentGrid(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+                          itemCount: torneios.length,
+                          itemBuilder: (context, index) {
+                            final torneio = torneios[index];
+
+                            return TcgTournamentTile(
+                              nome: torneio.nome,
+                              data: torneio.dataHora,
+                              formato: torneio.formato,
+                              status: torneio.status,
+                              buttonText: 'Gerenciar',
+                              onTap: () => _gerenciarTorneio(torneio),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
-      )),
-      floatingActionButton:
-          FloatingActionButton.extended(
-        onPressed: () =>
-            _criarTorneio(context),
-        icon: const Icon(
-          Icons.add,
-        ),
-        label: const Text(
-          'Criar torneio',
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _criarTorneio,
+          icon: const Icon(Icons.add),
+          label: const Text('Criar torneio'),
         ),
       ),
-    ));
+    );
   }
 }

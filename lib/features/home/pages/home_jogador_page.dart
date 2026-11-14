@@ -103,124 +103,127 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
 
     if (usuario == null) {
       return TcgTheme.wrap(const Scaffold(
-        body: ResponsiveBody(maxWidth: 1080, child: Center(
-          child: Text('Usuário não identificado.'),
-        )),
+        body: Center(child: Text('Usuário não identificado.')),
       ));
     }
 
-    return TcgTheme.wrap(Scaffold(
-      appBar: AppBar(
-        title: const Text('Meus torneios'),
-        actions: [
-          IconButton(
-            tooltip: 'Meu perfil',
-            onPressed: _abrirPerfil,
-            icon: const Icon(Icons.account_circle_outlined),
-          ),
-          IconButton(
-            tooltip: 'Atualizar',
-            onPressed: _atualizarTorneios,
-            icon: const Icon(Icons.refresh),
-          ),
-          IconButton(
-            tooltip: 'Sair',
-            onPressed: _logout,
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: ResponsiveBody(maxWidth: 1080, child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TcgHero(title: 'Olá, ${usuario.nome}', subtitle: 'Acompanhe seus torneios e partidas.', icon: Icons.style_rounded),
-            const SizedBox(height: 4),
-            if (!usuario.possuiDadosOficiais) ...[
-              Card(child: ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: const Text('Complete seu perfil para jogar'),
-                subtitle: const Text('Informe seu Pokémon Player ID e '
-                    'nascimento para participar de torneios.'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _abrirPerfil,
-              )),
-            ],
-            Expanded(
-              child: StreamBuilder<List<TorneioJogadorModel>>(
-                stream: _torneiosStream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    debugPrint(
-                      'Erro ao carregar torneios: ${snapshot.error}',
-                    );
-
-                    debugPrint(
-                      'StackTrace: ${snapshot.stackTrace}',
-                    );
-
-                    return Center(
-                      child: Text(
-                        'Erro ao carregar torneios:\n${snapshot.error}',
-                        textAlign: TextAlign.center,
+    return TcgTheme.wrap(
+      Scaffold(
+        backgroundColor: TcgTheme.fundo,
+        body: TcgBackground(
+          child: SafeArea(
+            bottom: false,
+            child: ResponsiveBody(
+              maxWidth: 1080,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TcgCurvedHeader(
+                    saudacao: 'Olá, ${usuario.nome}',
+                    titulo: 'Meus torneios',
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Image.asset(
+                          'assets/images/pokeduelix_logo.png',
+                          width: 32,
+                          height: 32,
+                        ),
                       ),
-                    );
-                  }
-
-                  if (snapshot.connectionState ==
-                          ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-
-                  final torneios = snapshot.data ?? [];
-
-                  debugPrint(
-                    'Quantidade de torneios: ${torneios.length}',
-                  );
-
-                  if (torneios.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Você ainda não participa de nenhum torneio.',
-                        textAlign: TextAlign.center,
+                      IconButton(
+                        tooltip: 'Meu perfil',
+                        onPressed: _abrirPerfil,
+                        icon: const Icon(Icons.account_circle_outlined,
+                            color: Colors.white),
                       ),
-                    );
-                  }
+                      IconButton(
+                        tooltip: 'Atualizar',
+                        onPressed: _atualizarTorneios,
+                        icon: const Icon(Icons.refresh, color: Colors.white),
+                      ),
+                      IconButton(
+                        tooltip: 'Sair',
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  if (!usuario.possuiDadosOficiais)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: TcgGlassCard(
+                        onTap: _abrirPerfil,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
+                        child: const ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.info_outline),
+                          title: Text('Complete seu perfil para jogar'),
+                          subtitle: Text(
+                              'Informe seu Pokémon Player ID e nascimento.'),
+                          trailing: Icon(Icons.chevron_right),
+                        ),
+                      ),
+                    ),
+                  Expanded(
+                    child: StreamBuilder<List<TorneioJogadorModel>>(
+                      stream: _torneiosStream,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text(
+                              'Erro ao carregar torneios:\n${snapshot.error}',
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        }
+                        if (snapshot.connectionState ==
+                                ConnectionState.waiting &&
+                            !snapshot.hasData) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 60),
-                    child: ResponsiveTournamentGrid(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      itemCount: torneios.length,
-                      itemBuilder: (context, index) {
-                        final item = torneios[index];
-                    
-                        return TcgTournamentTile(
-                          nome: item.torneio.nome,
-                          data: item.torneio.dataHora,
-                          formato: item.torneio.formato,
-                          status: item.status,
-                          pontos: item.pontos,
-                          onTap: () => _abrirTorneio(item),
+                        final torneios = snapshot.data ?? [];
+
+                        if (torneios.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              'Você ainda não participa de nenhum torneio.',
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        }
+
+                        return ResponsiveTournamentGrid(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+                          itemCount: torneios.length,
+                          itemBuilder: (context, index) {
+                            final item = torneios[index];
+                            return TcgTournamentTile(
+                              nome: item.torneio.nome,
+                              data: item.torneio.dataHora,
+                              formato: item.torneio.formato,
+                              status: item.status,
+                              pontos: item.pontos,
+                              onTap: () => _abrirTorneio(item),
+                            );
+                          },
                         );
                       },
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
-      )),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _entrarTorneio,
-        icon: const Icon(Icons.add),
-        label: const Text('Entrar em torneio'),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _entrarTorneio,
+          icon: const Icon(Icons.add),
+          label: const Text('Entrar em torneio'),
+        ),
       ),
-    ));
+    );
   }
 }

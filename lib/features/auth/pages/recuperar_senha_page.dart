@@ -26,30 +26,31 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     super.dispose();
   }
 
+  void _mostrarMensagem(String mensagem) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensagem)),
+    );
+  }
+
   Future<void> _enviarEmail() async {
+    if (_carregando) return;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _carregando = true);
 
     try {
-      await _authService.recuperarSenha(
-        _emailController.text.trim(),
-      );
+      await _authService.recuperarSenha(_emailController.text.trim());
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Se houver uma conta compatível, você receberá um e-mail com as instruções.',
-          ),
-        ),
+      _mostrarMensagem(
+        'Se houver uma conta compatível, você receberá um e-mail com as instruções.',
       );
 
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-
       String mensagem = 'Não foi possível enviar o e-mail. Tente novamente.';
 
       if (e.code == 'invalid-email') {
@@ -60,17 +61,9 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
         mensagem = 'Verifique sua conexão com a internet.';
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensagem)),
-      );
+      _mostrarMensagem(mensagem);
     } catch (_) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ocorreu um erro inesperado.'),
-        ),
-      );
+      _mostrarMensagem('Ocorreu um erro inesperado.');
     } finally {
       if (mounted) {
         setState(() => _carregando = false);
@@ -80,85 +73,125 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Recuperar senha'),
-      ),
-      body: ResponsiveBody(maxWidth: 720, child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 450),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+    return TcgTheme.wrap(
+      Scaffold(
+        backgroundColor: TcgTheme.fundo,
+        resizeToAvoidBottomInset: true,
+        body: TcgBackground(
+          child: SafeArea(
+            child: ResponsiveBody(
+              maxWidth: 720,
+              child: Stack(
                 children: [
-                  const Icon(
-                    Icons.lock_reset_rounded,
-                    size: 75,
-                    color: TcgTheme.orange,
-                  ),
+                  Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 440),
+                        child: TcgGlassCard(
+                          padding: const EdgeInsets.all(24),
+                          child: Form(
+                            key: _formKey,
+                            child: AutofillGroup(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Logo
+                                  Image.asset(
+                                    'assets/images/pokeduelix_logo.png',
+                                    width: 56,
+                                    height: 56,
+                                  ),
+                                  const SizedBox(height: 20),
 
-                  const SizedBox(height: 24),
+                                  const Text(
+                                    'Esqueceu sua senha?',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Informe seu e-mail cadastrado. '
+                                    'Enviaremos instruções para você '
+                                    'redefinir sua senha.',
+                                    style: TextStyle(
+                                      color: TcgTheme.muted,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 28),
 
-                  Text(
-                    'Esqueceu sua senha?',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
+                                  TextFormField(
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    textInputAction: TextInputAction.done,
+                                    autocorrect: false,
+                                    autofillHints: const [AutofillHints.email],
+                                    onFieldSubmitted: (_) => _enviarEmail(),
+                                    decoration: const InputDecoration(
+                                      labelText: 'E-mail',
+                                    ),
+                                    validator: (valor) {
+                                      if (valor == null ||
+                                          valor.trim().isEmpty) {
+                                        return 'Informe seu e-mail.';
+                                      }
 
-                  const SizedBox(height: 12),
+                                      if (!RegExp(
+                                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                      ).hasMatch(valor.trim())) {
+                                        return 'Informe um e-mail válido.';
+                                      }
 
-                  const Text(
-                    'Informe seu e-mail cadastrado. '
-                    'Enviaremos instruções para você redefinir sua senha.',
-                    textAlign: TextAlign.center,
-                  ),
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 24),
 
-                  const SizedBox(height: 30),
+                                  TcgGradientButton(
+                                    texto: 'Enviar instruções',
+                                    icone: Icons.send_rounded,
+                                    carregando: _carregando,
+                                    onPressed: _enviarEmail,
+                                  ),
+                                  const SizedBox(height: 8),
 
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'E-mail',
-                      prefixIcon: Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (valor) {
-                      if (valor == null || valor.trim().isEmpty) {
-                        return 'Informe seu e-mail.';
-                      }
-
-                      if (!RegExp(
-                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                      ).hasMatch(valor.trim())) {
-                        return 'Informe um e-mail válido.';
-                      }
-
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  ElevatedButton.icon(
-                    onPressed: _carregando ? null : _enviarEmail,
-                    icon: _carregando
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                                  Center(
+                                    child: TextButton(
+                                      onPressed: _carregando
+                                          ? null
+                                          : () => Navigator.pop(context),
+                                      child: const Text(
+                                        'Voltar para o login',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          )
-                        : const Icon(Icons.send_rounded),
-                    label: Text(
-                      _carregando
-                          ? 'Enviando...'
-                          : 'Enviar instruções',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Botão voltar
+                  Positioned(
+                    top: 4,
+                    left: 4,
+                    child: IconButton(
+                      tooltip: 'Voltar',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -166,7 +199,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 }

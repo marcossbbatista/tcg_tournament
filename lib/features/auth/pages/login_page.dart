@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 
@@ -30,6 +31,18 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _carregando = false;
   bool _senhaVisivel = false;
+
+  Future<void> _abrir(Widget pagina) async {
+  FocusScope.of(context).unfocus();
+
+  await Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => pagina),
+  );
+
+  if (!mounted) return;
+  FocusManager.instance.primaryFocus?.unfocus();
+}
 
   @override
   void dispose() {
@@ -175,179 +188,186 @@ Future<void> _processarLogin(
   }
 
   @override
-  Widget build(BuildContext context) {
-    return TcgTheme.wrap(Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
-      body: ResponsiveBody(maxWidth: 720, child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(30),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const TcgHero(title: 'PokéDuelix', subtitle: 'Organize e acompanhe seus torneios',   imageAsset: 'assets/images/trasgo_logo.jpg'),
-                const SizedBox(height: 32),
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  autocorrect: false,
-                  decoration: const InputDecoration(
-                    labelText: 'E-mail',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextField(
-                  controller: _senhaController,
-                  obscureText: !_senhaVisivel,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) {
-                    if (!_carregando) {
-                      _fazerLogin();
-                    }
-                  },
-                  decoration: InputDecoration(
-                    labelText: 'Senha',
-                    suffixIcon: IconButton(tooltip: 'Mostrar ou ocultar senha', icon: Icon(_senhaVisivel ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel)),
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock_outline),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Botão entrar
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _carregando ? null : _fazerLogin,
-                    child: _carregando
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+    Widget build(BuildContext context) {
+      return TcgTheme.wrap(
+        Scaffold(
+          resizeToAvoidBottomInset: true,
+          body: TcgBackground(
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: TcgGlassCard(
+                      padding: const EdgeInsets.all(24),
+                      child: AutofillGroup(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Ícone
+                            Image.asset(
+                              'assets/images/pokeduelix_logo.png',
+                              width: 64,
+                              height: 64,
                             ),
-                          )
-                        : const Text('Entrar'),
-                  ),
-                ),
+                            const SizedBox(height: 20),
 
-                const SizedBox(height: 20),
+                            const Text.rich(
+                              TextSpan(
+                                style: TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                                children: [
+                                  TextSpan(text: 'Poké', style: TextStyle(color: Colors.white)),
+                                  TextSpan(text: 'Duelix', style: TextStyle(color: TcgTheme.verde)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Entre para acompanhar seus torneios',
+                              style: TextStyle(color: TcgTheme.muted),
+                            ),
+                            const SizedBox(height: 28),
 
-                // Separador OU
-                const Row(
-                  children: [
-                    Expanded(child: Divider()),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'OU',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    Expanded(child: Divider()),
-                  ],
-                ),
+                            TextField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              autocorrect: false,
+                              autofillHints: const [AutofillHints.email],
+                              decoration: const InputDecoration(
+                                labelText: 'E-mail',
+                              ),
+                            ),
+                            const SizedBox(height: 16),
 
-                const SizedBox(height: 20),
+                            TextField(
+                              controller: _senhaController,
+                              obscureText: !_senhaVisivel,
+                              textInputAction: TextInputAction.done,
+                              autofillHints: const [AutofillHints.password],
+                              onSubmitted: (_) => _fazerLogin(),
+                              decoration: InputDecoration(
+                                labelText: 'Senha',
+                                suffixIcon: IconButton(
+                                  tooltip: 'Mostrar ou ocultar senha',
+                                  icon: Icon(
+                                    _senhaVisivel
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () => setState(
+                                    () => _senhaVisivel = !_senhaVisivel,
+                                  ),
+                                ),
+                              ),
+                            ),
 
-                // Botão Google
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: OutlinedButton(
-                    onPressed: _carregando ? null : _fazerLoginComGoogle,
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black87,
-                      side: const BorderSide(
-                        color: Color(0xFFDADCE0),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/images/google_logo.png',
-                          height: 22,
-                          width: 22,
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () => _abrir(const RecuperarSenhaPage()),
+                                child: const Text(
+                                  'Esqueci minha senha',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            TcgGradientButton(
+                              texto: 'Entrar',
+                              carregando: _carregando,
+                              onPressed: _fazerLogin,
+                            ),
+
+                            const SizedBox(height: 20),
+                            const Row(
+                              children: [
+                                Expanded(child: Divider()),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  child: Text(
+                                    'OU CONTINUE COM',
+                                    style: TextStyle(
+                                      color: TcgTheme.muted,
+                                      fontSize: 12,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(child: Divider()),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: OutlinedButton(
+                                onPressed:
+                                    _carregando ? null : _fazerLoginComGoogle,
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black87,
+                                  side: const BorderSide(
+                                    color: Color(0xFFDADCE0),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/google_logo.png',
+                                      height: 22,
+                                      width: 22,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Google',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+                            Center(
+                              child: Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Não tem uma conta?',
+                                    style: TextStyle(color: TcgTheme.muted),
+                                  ),
+                                  TextButton(
+                                    onPressed: _carregando ? null : () => _abrir(const RegistrarPage()),
+                                    child: const Text(
+                                      'Criar conta',
+                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Continuar com Google',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 16),
-
-                // Criar conta
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: OutlinedButton(
-                    onPressed:  _carregando
-                      ? null
-                      : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RegistrarPage(),
-                            ),
-                          );
-                        },
-                    child: TextButton(
-                  onPressed: _carregando
-                      ? null
-                      : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RegistrarPage(),
-                            ),
-                          );
-                        },
-                  child: const Text('Criar conta'),
-                )
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RecuperarSenhaPage(),
-                      ),
-                    );
-                  },
-                  child: const Text('Esqueci minha senha'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
-      )),
-    ));
+      );
+    }
   }
-}

@@ -1,7 +1,7 @@
-import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tcg_tournament/core/session/usuario_session.dart';
+import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:tcg_tournament/features/home/pages/home_jogador_page.dart';
 
 import '../services/auth_service.dart';
@@ -22,9 +22,9 @@ class _RegistrarPageState extends State<RegistrarPage> {
   final _primeiroNomeController = TextEditingController();
   final _sobrenomeController = TextEditingController();
   final _playerIdController = TextEditingController();
-  DateTime? _dataNascimento;
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
+  DateTime? _dataNascimento;
 
   final _authService = AuthService();
   final _usuarioService = UsuarioService();
@@ -45,9 +45,7 @@ class _RegistrarPageState extends State<RegistrarPage> {
   Future<void> _registrar() async {
     if (_carregando) return;
 
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     if (_dataNascimento == null) {
       _mostrarMensagem('Informe a data de nascimento.');
@@ -100,9 +98,7 @@ class _RegistrarPageState extends State<RegistrarPage> {
       // Encaminha para a página inicial do jogador.
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (_) => const HomeJogadorPage(),
-        ),
+        MaterialPageRoute(builder: (_) => const HomeJogadorPage()),
         (route) => false,
       );
     } on FirebaseAuthException catch (e) {
@@ -139,214 +135,295 @@ class _RegistrarPageState extends State<RegistrarPage> {
     );
   }
 
+  String _formatarData(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/'
+      '${d.month.toString().padLeft(2, '0')}/'
+      '${d.year}';
+
+  Future<void> _selecionarData() async {
+    final data = await showDatePicker(
+      context: context,
+      initialDate: _dataNascimento ?? DateTime(2008),
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
+    );
+
+    if (data != null && mounted) {
+      setState(() => _dataNascimento = data);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: const Text('Criar conta'),
-      ),
-      body: ResponsiveBody(maxWidth: 720, child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(
-                      Icons.person_add_alt_1,
-                      size: 64,
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    const Text(
-                      'Crie sua conta',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
+    return TcgTheme.wrap(
+      Scaffold(
+        backgroundColor: TcgTheme.fundo,
+        resizeToAvoidBottomInset: true,
+        body: TcgBackground(
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Seta fixa no topo
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                    child: IconButton(
+                      tooltip: 'Voltar',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
                       ),
                     ),
+                  ),
+                ),
 
-                    const SizedBox(height: 8),
+                // Só esta área rola
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 440),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // ===== CARD DE VIDRO (só o topo) =====
+                            TcgGlassCard(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/pokeduelix_logo.png',
+                                    width: 56,
+                                    height: 56,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  const Text(
+                                    'Crie sua conta',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Preencha seus dados para começar a '
+                                    'participar dos torneios.',
+                                    style: TextStyle(
+                                      color: TcgTheme.muted,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
 
-                    Text(
-                      'Preencha seus dados para começar a participar dos torneios.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
-                      ),
-                    ),
+                            const SizedBox(height: 24),
 
-                    const SizedBox(height: 32),
+                            // ===== FORMULÁRIO (fora do card) =====
+                            Form(
+                              key: _formKey,
+                              child: AutofillGroup(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    // Nome oficial para o TOM.
+                                    TextFormField(
+                                      controller: _primeiroNomeController,
+                                      textCapitalization:
+                                          TextCapitalization.words,
+                                      textInputAction: TextInputAction.next,
+                                      autofillHints: const [
+                                        AutofillHints.givenName,
+                                      ],
+                                      decoration: const InputDecoration(
+                                        labelText: 'Primeiro nome',
+                                      ),
+                                      validator: (valor) =>
+                                          valor == null ||
+                                                  valor.trim().isEmpty
+                                              ? 'Informe seu primeiro nome.'
+                                              : null,
+                                    ),
+                                    const SizedBox(height: 16),
 
-                    // Nome oficial para o TOM.
-                    TextFormField(
-                      controller: _primeiroNomeController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                        labelText: 'Primeiro nome',
-                        prefixIcon: Icon(Icons.person_outline),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (valor) => valor == null || valor.trim().isEmpty
-                          ? 'Informe seu primeiro nome.' : null,
-                    ),
+                                    TextFormField(
+                                      controller: _sobrenomeController,
+                                      textCapitalization:
+                                          TextCapitalization.words,
+                                      textInputAction: TextInputAction.next,
+                                      autofillHints: const [
+                                        AutofillHints.familyName,
+                                      ],
+                                      decoration: const InputDecoration(
+                                        labelText: 'Sobrenome',
+                                      ),
+                                      validator: (valor) =>
+                                          valor == null ||
+                                                  valor.trim().isEmpty
+                                              ? 'Informe seu sobrenome.'
+                                              : null,
+                                    ),
+                                    const SizedBox(height: 16),
 
-                    const SizedBox(height: 16),
+                                    TextFormField(
+                                      controller: _playerIdController,
+                                      keyboardType: TextInputType.number,
+                                      textInputAction: TextInputAction.next,
+                                      decoration: const InputDecoration(
+                                        labelText:
+                                            'Pokémon Player ID (POP ID)',
+                                        helperText: 'De 5 a 12 dígitos.',
+                                      ),
+                                      validator:
+                                          PokemonRulebook.validarIdentificador,
+                                    ),
+                                    const SizedBox(height: 16),
 
-                    TextFormField(
-                      controller: _sobrenomeController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                        labelText: 'Sobrenome',
-                        prefixIcon: Icon(Icons.person_outline),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (valor) => valor == null || valor.trim().isEmpty
-                          ? 'Informe seu sobrenome.' : null,
-                    ),
+                                    // Data de nascimento
+                                    InkWell(
+                                      borderRadius: BorderRadius.circular(8),
+                                      onTap: _selecionarData,
+                                      child: InputDecorator(
+                                        decoration: const InputDecoration(
+                                          suffixIcon:
+                                              Icon(Icons.cake_outlined),
+                                        ),
+                                        child: Text(
+                                          _dataNascimento == null
+                                              ? 'SData de nascimento'
+                                              : _formatarData(
+                                                  _dataNascimento!),
+                                          style: TextStyle(
+                                            color: _dataNascimento == null
+                                                ? Colors.white38
+                                                : Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
 
-                    const SizedBox(height: 16),
+                                    TextFormField(
+                                      controller: _emailController,
+                                      keyboardType:
+                                          TextInputType.emailAddress,
+                                      textInputAction: TextInputAction.next,
+                                      autocorrect: false,
+                                      autofillHints: const [
+                                        AutofillHints.email,
+                                      ],
+                                      decoration: const InputDecoration(
+                                        labelText: 'E-mail',
+                                      ),
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
+                                          return 'Informe seu e-mail.';
+                                        }
 
-                    TextFormField(
-                      controller: _playerIdController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Pokémon Player ID (POP ID)',
-                        prefixIcon: Icon(Icons.confirmation_number_outlined),
-                        border: OutlineInputBorder(),
-                        helperText: 'De 5 a 12 dígitos.',
-                      ),
-                      validator: PokemonRulebook.validarIdentificador,
-                    ),
+                                        if (!RegExp(
+                                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                        ).hasMatch(value.trim())) {
+                                          return 'Informe um e-mail válido.';
+                                        }
 
-                    const SizedBox(height: 16),
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
 
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.cake_outlined),
-                      label: Text(_dataNascimento == null
-                          ? 'Selecionar data de nascimento'
-                          : 'Nascimento: ${_dataNascimento!.day.toString().padLeft(2, '0')}/'
-                            '${_dataNascimento!.month.toString().padLeft(2, '0')}/'
-                            '${_dataNascimento!.year}'),
-                      onPressed: () async {
-                        final data = await showDatePicker(
-                          context: context,
-                          initialDate: _dataNascimento ?? DateTime(2008),
-                          firstDate: DateTime(1920),
-                          lastDate: DateTime.now(),
-                        );
-                        if (data != null && mounted) {
-                          setState(() => _dataNascimento = data);
-                        }
-                      },
-                    ),
+                                    TextFormField(
+                                      controller: _senhaController,
+                                      obscureText: !_senhaVisivel,
+                                      textInputAction: TextInputAction.done,
+                                      autofillHints: const [
+                                        AutofillHints.newPassword,
+                                      ],
+                                      onFieldSubmitted: (_) => _registrar(),
+                                      decoration: InputDecoration(
+                                        labelText: 'Senha',
+                                        suffixIcon: IconButton(
+                                          tooltip: 'Mostrar ou ocultar senha',
+                                          onPressed: () => setState(
+                                            () => _senhaVisivel =
+                                                !_senhaVisivel,
+                                          ),
+                                          icon: Icon(
+                                            _senhaVisivel
+                                                ? Icons.visibility_off
+                                                : Icons.visibility,
+                                          ),
+                                        ),
+                                      ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Informe uma senha.';
+                                        }
 
-                    const SizedBox(height: 16),
+                                        if (value.length < 6) {
+                                          return 'A senha deve ter pelo '
+                                              'menos 6 caracteres.';
+                                        }
 
-                    // E-mail
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'E-mail',
-                        prefixIcon: Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Informe seu e-mail.';
-                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 28),
 
-                        if (!RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(value.trim())) {
-                          return 'Informe um e-mail válido.';
-                        }
+                                    TcgGradientButton(
+                                      texto: 'Criar conta',
+                                      carregando: _carregando,
+                                      onPressed: _registrar,
+                                    ),
+                                    const SizedBox(height: 8),
 
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Senha
-                    TextFormField(
-                      controller: _senhaController,
-                      obscureText: !_senhaVisivel,
-                      decoration: InputDecoration(
-                        labelText: 'Senha',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _senhaVisivel = !_senhaVisivel;
-                            });
-                          },
-                          icon: Icon(
-                            _senhaVisivel
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
+                                    Center(
+                                      child: Wrap(
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        children: [
+                                          const Text(
+                                            'Já tem uma conta?',
+                                            style: TextStyle(
+                                              color: TcgTheme.muted,
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: _carregando
+                                                ? null
+                                                : () =>
+                                                    Navigator.pop(context),
+                                            child: const Text(
+                                              'Entrar',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Informe uma senha.';
-                        }
-
-                        if (value.length < 6) {
-                          return 'A senha deve ter pelo menos 6 caracteres.';
-                        }
-
-                        return null;
-                      },
                     ),
-
-                    const SizedBox(height: 28),
-
-                    // Botão cadastrar
-                    ElevatedButton(
-                      onPressed: _carregando ? null : _registrar,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: _carregando
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Criar conta'),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TextButton(
-                      onPressed: _carregando
-                          ? null
-                          : () => Navigator.pop(context),
-                      child: const Text('Já tenho uma conta. Entrar'),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 }

@@ -1,220 +1,341 @@
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-/// Identidade visual compartilhada do aplicativo TCG.
-/// Inspirada nas cores da Trasgo Nerd Store.
+/// Identidade visual compartilhada do aplicativo (tema escuro + verde).
 class TcgTheme {
-  // Cores principais
-  static const Color orange = Color(0xFFF47B16);
-  static const Color orangeDark = Color(0xFFE6650B);
-  static const Color green = Color(0xFF39A935);
-  static const Color greenDark = Color(0xFF27852A);
-  static const Color black = Color(0xFF151515);
+  // ===== Cores novas =====
+  static const Color fundo = Color(0xFF14142B);
+  static const Color card = Color(0xFF1E1E38);
+  static const Color campo = Color(0xFF2A2A45);
+  static const Color borda = Color(0xFF3A3A5C);
 
-  // Cores de apoio
-  static const Color background = Color(0xFFFFF8F1);
-  static const Color muted = Color(0xFF77716B);
-  static const Color lightOrange = Color(0xFFFFE9D2);
-  static const Color lightGreen = Color(0xFFE5F5E2);
-  static const Color border = Color(0xFFE9DED1);
+  static const Color verde = Color(0xFF3DDC84);
+  static const Color verdeClaro = Color(0xFF7BE495);
+  static const Color verdeEscuro = Color(0xFF1FA84F);
 
-  // Gradiente principal
+  static const Color texto = Colors.white;
+  static const Color muted = Color(0xFFA0A0BC);
+  static const Color erro = Color(0xFFFF6B6B);
+
+  // ===== Aliases antigos (para as telas atuais não quebrarem) =====
+  // Você pode ir trocando pelos nomes novos aos poucos.
+  static const Color orange = verde;
+  static const Color orangeDark = verdeEscuro;
+  static const Color green = verde;
+  static const Color greenDark = verdeEscuro;
+  static const Color black = texto; // antes era o texto escuro, agora é branco
+  static const Color background = fundo;
+  static const Color border = borda;
+  static const Color lightOrange = campo;
+  static const Color lightGreen = Color(0xFF1F3A2E);
+
+  // Gradiente principal (botões, hero, ícones)
   static const LinearGradient gradient = LinearGradient(
-    colors: [orange, orangeDark],
+    colors: [verdeClaro, verdeEscuro],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
 
+  // Estilo da status bar e da barra de navegação
+  static const SystemUiOverlayStyle overlay = SystemUiOverlayStyle(
+    statusBarColor: fundo,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+    systemNavigationBarColor: fundo,
+    systemNavigationBarIconBrightness: Brightness.light,
+  );
+
   static ThemeData data() {
     final scheme = ColorScheme.fromSeed(
-      seedColor: orange,
-      brightness: Brightness.light,
-      surface: Colors.white,
+      seedColor: verde,
+      brightness: Brightness.dark,
     ).copyWith(
-      primary: orange,
-      onPrimary: Colors.white,
-      secondary: green,
+      primary: verde,
+      onPrimary: fundo,
+      secondary: verdeEscuro,
       onSecondary: Colors.white,
-      tertiary: black,
-      surface: Colors.white,
-      onSurface: black,
-      error: const Color(0xFFC62828),
+      surface: card,
+      onSurface: texto,
+      error: erro,
     );
+
+    OutlineInputBorder borda0(Color cor, {double largura = 1}) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: cor, width: largura),
+        );
 
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.dark,
       colorScheme: scheme,
-      scaffoldBackgroundColor: background,
+      scaffoldBackgroundColor: fundo,
+      canvasColor: fundo,
       fontFamily: 'Roboto',
 
       appBarTheme: const AppBarTheme(
-        backgroundColor: background,
-        foregroundColor: black,
+        backgroundColor: fundo,
+        foregroundColor: texto,
         surfaceTintColor: Colors.transparent,
         centerTitle: false,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        systemOverlayStyle: overlay,
         titleTextStyle: TextStyle(
           fontSize: 21,
           fontWeight: FontWeight.w800,
-          color: black,
+          color: texto,
         ),
       ),
 
       textTheme: const TextTheme(
         headlineSmall: TextStyle(
           fontWeight: FontWeight.w800,
-          color: black,
+          color: texto,
           fontSize: 27,
         ),
         titleLarge: TextStyle(
           fontWeight: FontWeight.w800,
-          color: black,
+          color: texto,
           fontSize: 21,
         ),
         titleMedium: TextStyle(
           fontWeight: FontWeight.w700,
-          color: black,
+          color: texto,
           fontSize: 16,
         ),
-        bodyMedium: TextStyle(
-          color: black,
-          fontSize: 14,
-        ),
-        bodySmall: TextStyle(
-          color: muted,
-          fontSize: 12,
-        ),
+        bodyMedium: TextStyle(color: texto, fontSize: 14),
+        bodySmall: TextStyle(color: muted, fontSize: 12),
       ),
 
+      iconTheme: const IconThemeData(color: Colors.white70),
+
       cardTheme: CardThemeData(
-        color: Colors.white,
-        elevation: 1,
-        shadowColor: const Color(0x1A000000),
+        color: card,
+        elevation: 0,
         surfaceTintColor: Colors.transparent,
         margin: const EdgeInsets.symmetric(vertical: 7),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: borda),
         ),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 17,
-        ),
-        labelStyle: const TextStyle(color: muted),
-        hintStyle: const TextStyle(
-          color: Color(0xFFAAA19A),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: orange,
-            width: 2,
-          ),
-        ),
+        fillColor: campo,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
+        labelStyle: const TextStyle(color: Colors.white70),
+        hintStyle: const TextStyle(color: Colors.white38),
+        prefixIconColor: Colors.white70,
+        suffixIconColor: Colors.white70,
+        border: borda0(Colors.transparent),
+        enabledBorder: borda0(Colors.transparent),
+        focusedBorder: borda0(verde, largura: 2),
+        errorBorder: borda0(erro),
+        focusedErrorBorder: borda0(erro, largura: 2),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: orange,
+          backgroundColor: verdeEscuro,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFFFD1A6),
-          minimumSize: const Size(0, 52),
+          disabledBackgroundColor: campo,
+          disabledForegroundColor: Colors.white38,
+          minimumSize: const Size(0, 50),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(8),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
+            letterSpacing: 1,
           ),
         ),
       ),
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: orangeDark,
+          foregroundColor: verde,
           minimumSize: const Size(0, 50),
-          side: const BorderSide(color: orange),
+          side: const BorderSide(color: verde),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(8),
           ),
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
 
-      floatingActionButtonTheme:
-          const FloatingActionButtonThemeData(
-        backgroundColor: orange,
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: verde),
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: verdeEscuro,
         foregroundColor: Colors.white,
-        extendedTextStyle: TextStyle(
-          fontWeight: FontWeight.w700,
-        ),
+        extendedTextStyle: TextStyle(fontWeight: FontWeight.w700),
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: lightOrange,
-        selectedColor: orange,
+        backgroundColor: campo,
+        selectedColor: verdeEscuro,
+        labelStyle: const TextStyle(color: texto),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         side: BorderSide.none,
       ),
 
-      dividerTheme: const DividerThemeData(
-        color: border,
+      dividerTheme: const DividerThemeData(color: Colors.white24),
+
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? verde : Colors.transparent,
+        ),
+        checkColor: WidgetStateProperty.all(fundo),
+        side: const BorderSide(color: Colors.white54, width: 1.5),
+      ),
+
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? verde : Colors.white54,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? const Color(0x663DDC84)
+              : campo,
+        ),
+      ),
+
+      progressIndicatorTheme:
+          const ProgressIndicatorThemeData(color: verde),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: card,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: card,
+        surfaceTintColor: Colors.transparent,
       ),
 
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: black,
-        contentTextStyle: const TextStyle(
-          color: Colors.white,
-        ),
+        backgroundColor: campo,
+        contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
 
       datePickerTheme: DatePickerThemeData(
-        backgroundColor: Colors.white,
-        headerBackgroundColor: orange,
+        backgroundColor: card,
+        surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: verdeEscuro,
         headerForegroundColor: Colors.white,
-        dayForegroundColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return Colors.white;
-          }
-          return black;
+        dayForegroundColor: WidgetStateProperty.resolveWith((s) {
+          if (s.contains(WidgetState.selected)) return fundo;
+          return texto;
         }),
-        todayForegroundColor: WidgetStateProperty.all(orange),
-        todayBorder: const BorderSide(color: orange),
-        yearForegroundColor: WidgetStateProperty.all(orange),
-        dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return orange;
-          }
+        todayForegroundColor: WidgetStateProperty.all(verde),
+        todayBorder: const BorderSide(color: verde),
+        yearForegroundColor: WidgetStateProperty.all(verde),
+        dayBackgroundColor: WidgetStateProperty.resolveWith((s) {
+          if (s.contains(WidgetState.selected)) return verde;
           return Colors.transparent;
         }),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
         ),
       ),
     );
   }
 
-  static Widget wrap(Widget child) =>
-      Theme(data: data(), child: child);
+  /// Aplica o tema e o estilo da status bar / barra de navegação.
+  static Widget wrap(Widget child) => Theme(
+        data: data(),
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: overlay,
+          child: child,
+        ),
+      );
+}
+
+/// Botão principal com degradê verde (o ElevatedButton não aceita gradiente).
+class TcgGradientButton extends StatelessWidget {
+  final String texto;
+  final VoidCallback? onPressed;
+  final bool carregando;
+  final IconData? icone;
+
+  const TcgGradientButton({
+    super.key,
+    required this.texto,
+    required this.onPressed,
+    this.carregando = false,
+    this.icone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final desabilitado = onPressed == null || carregando;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          gradient: desabilitado ? null : TcgTheme.gradient,
+          color: desabilitado ? TcgTheme.campo : null,
+        ),
+        child: ElevatedButton(
+          onPressed: desabilitado ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: carregando
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (icone != null) ...[
+                      Icon(icone, size: 20),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      texto.toUpperCase(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Banner principal das páginas
@@ -242,15 +363,13 @@ class TcgHero extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 20),
           padding: EdgeInsets.all(compacto ? 16 : 22),
           decoration: BoxDecoration(
-            gradient: TcgTheme.gradient,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33F47B16),
-                blurRadius: 18,
-                offset: Offset(0, 8),
-              ),
-            ],
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2A2A45), Color(0xFF1E1E38)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: TcgTheme.borda),
           ),
           child: Row(
             children: [
@@ -270,7 +389,7 @@ class TcgHero extends StatelessWidget {
                     Text(
                       subtitle,
                       style: const TextStyle(
-                        color: Color(0xFFFFF1E3),
+                        color: TcgTheme.muted,
                         height: 1.35,
                       ),
                     ),
@@ -278,19 +397,17 @@ class TcgHero extends StatelessWidget {
                 ),
               ),
               SizedBox(width: compacto ? 8 : 12),
-
-              // Imagem ou ícone
               Container(
                 width: compacto ? 46 : 76,
                 height: compacto ? 46 : 76,
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: const Color(0x33FFFFFF),
-                  borderRadius: BorderRadius.circular(18),
+                  gradient: TcgTheme.gradient,
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: imageAsset != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
                           imageAsset!,
                           fit: BoxFit.cover,
@@ -316,40 +433,31 @@ class TcgHero extends StatelessWidget {
 class TcgStatusBadge extends StatelessWidget {
   final String status;
 
-  const TcgStatusBadge({
-    super.key,
-    required this.status,
-  });
+  const TcgStatusBadge({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
     final s = status.toLowerCase();
 
-    final good = s == 'aprovado' ||
-        s == 'finalizado' ||
-        s == 'finalizada';
-
+    final good = s == 'aprovado' || s == 'finalizado' || s == 'finalizada';
     final bad = s == 'recusado' || s == 'contestada';
 
     final color = good
-        ? TcgTheme.greenDark
+        ? TcgTheme.verde
         : bad
-            ? const Color(0xFFC62828)
-            : TcgTheme.orangeDark;
+            ? TcgTheme.erro
+            : const Color(0xFFFFB74D);
 
     final bg = good
-        ? TcgTheme.lightGreen
+        ? const Color(0x263DDC84)
         : bad
-            ? const Color(0xFFFFE7E7)
-            : TcgTheme.lightOrange;
+            ? const Color(0x26FF6B6B)
+            : const Color(0x26FFB74D);
 
     final label = status.replaceAll('_', ' ');
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(30),
@@ -405,115 +513,272 @@ class TcgTournamentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String two(int n) => n.toString().padLeft(2, '0');
-
     final when =
         '${two(data.day)}/${two(data.month)}/${data.year}  •  ${two(data.hour)}:${two(data.minute)}';
 
-    return Card(
+    return TcgGlassCard(
+      onTap: onTap,
       margin: const EdgeInsets.only(bottom: 14),
-      child: Padding(
-        padding: const EdgeInsets.all(17),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+      padding: const EdgeInsets.fromLTRB(18, 16, 10, 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 62,
-                  height: 69,
-                  decoration: BoxDecoration(
-                    gradient: TcgTheme.gradient,
-                    borderRadius: BorderRadius.circular(16),
+                Text(
+                  formato.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    letterSpacing: 1.2,
+                    color: TcgTheme.muted,
                   ),
-                  child: const Icon(
-                    Icons.emoji_events_rounded,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  nome,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    size: 32,
                   ),
                 ),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        nome,
-                        style: Theme.of(context).textTheme.titleMedium,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today_outlined,
+                        size: 14, color: TcgTheme.muted),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        when,
+                        style: const TextStyle(
+                            fontSize: 12, color: TcgTheme.muted),
                       ),
-                      const SizedBox(height: 7),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    TcgStatusBadge(status: status),
+                    if (pontos != null)
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.calendar_today_outlined,
-                            size: 15,
-                            color: TcgTheme.muted,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              when,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: TcgTheme.muted,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.style_outlined,
-                            size: 16,
-                            color: TcgTheme.muted,
-                          ),
-                          const SizedBox(width: 6),
+                          const Icon(Icons.emoji_events_rounded,
+                              color: TcgTheme.verde, size: 16),
+                          const SizedBox(width: 4),
                           Text(
-                            formato.toUpperCase(),
+                            '$pontos pts',
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: TcgTheme.muted,
+                              color: TcgTheme.verde,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              alignment: WrapAlignment.spaceBetween,
-              children: [
-                TcgStatusBadge(status: status),
-                if (pontos != null)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.emoji_events_rounded,
-                        color: TcgTheme.orange, size: 17),
-                      const SizedBox(width: 5),
-                      Text('$pontos pts', style: const TextStyle(
-                        color: TcgTheme.orangeDark,
-                        fontWeight: FontWeight.w800,
-                      )),
-                    ],
-                  ),
-              ],
+          ),
+          const SizedBox(width: 8),
+          TcgCircleButton(onTap: onTap),
+        ],
+      ),
+    );
+  }
+}
+
+/// Fundo com brilhos verdes (dá o que desfocar atrás do glass)
+class TcgBackground extends StatelessWidget {
+  final Widget child;
+  const TcgBackground({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        const Positioned.fill(child: ColoredBox(color: TcgTheme.fundo)),
+        Positioned(
+          top: 120,
+          right: -80,
+          child: Container(
+            width: 260,
+            height: 260,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [Color(0x553DDC84), Color(0x003DDC84)],
+              ),
             ),
-            const SizedBox(height: 13),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onTap,
-                icon: const Icon(Icons.arrow_forward_rounded),
-                label: Text(buttonText),
+          ),
+        ),
+        Positioned(
+          bottom: 40,
+          left: -100,
+          child: Container(
+            width: 320,
+            height: 320,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [Color(0x441FA84F), Color(0x001FA84F)],
+              ),
+            ),
+          ),
+        ),
+        Positioned.fill(child: child),
+      ],
+    );
+  }
+}
+
+/// Card estilo vidro (glassmorphism)
+class TcgGlassCard extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry margin;
+
+  const TcgGlassCard({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.padding = const EdgeInsets.all(18),
+    this.margin = EdgeInsets.zero,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(24);
+
+    return Padding(
+      padding: margin,
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0x26FFFFFF), Color(0x0DFFFFFF)],
+              ),
+              border: Border.all(color: const Color(0x33FFFFFF)),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                child: Padding(padding: padding, child: child),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Botão circular com um círculo translúcido ao fundo
+class TcgCircleButton extends StatelessWidget {
+  final VoidCallback? onTap;
+  final IconData icon;
+
+  const TcgCircleButton({
+    super.key,
+    required this.onTap,
+    this.icon = Icons.arrow_forward_rounded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 68,
+        height: 68,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Color(0x1F3DDC84), // círculo de fundo
+        ),
+        child: Container(
+          width: 52,
+          height: 52,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: TcgTheme.gradient,
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x663DDC84),
+                blurRadius: 14,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+/// Cabeçalho com curva embaixo (como o modelo)
+class TcgCurvedHeader extends StatelessWidget {
+  final String saudacao;
+  final String titulo;
+  final List<Widget> actions;
+
+  const TcgCurvedHeader({
+    super.key,
+    required this.saudacao,
+    required this.titulo,
+    this.actions = const [],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipPath(
+      clipper: _CurvaClipper(),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(20, 8, 8, 56),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1FA84F), Color(0xFF0F5E45)],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: actions,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              saudacao,
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              titulo,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],
@@ -521,4 +786,22 @@ class TcgTournamentTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CurvaClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final p = Path()
+      ..lineTo(0, size.height - 36)
+      ..quadraticBezierTo(
+        size.width * 0.5, size.height + 24,
+        size.width, size.height - 36,
+      )
+      ..lineTo(size.width, 0)
+      ..close();
+    return p;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> old) => false;
 }
