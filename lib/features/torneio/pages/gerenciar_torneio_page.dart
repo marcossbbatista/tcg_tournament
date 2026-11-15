@@ -153,69 +153,72 @@ class GerenciarTorneioPage extends StatelessWidget {
   }
 
   void _abrirFerramentasTom(BuildContext context, TorneioModel torneioAtual) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: TcgTheme.card,
-      builder: (sheetContext) {
-        void ir(Widget pagina) {
-          Navigator.pop(sheetContext);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => pagina),
-          );
-        }
-
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'TOM / TDF',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Prepare e exporte o torneio para o Tournament Operations Manager.',
-                  style: TextStyle(color: TcgTheme.muted, height: 1.4),
-                ),
-                const SizedBox(height: 18),
-                _AcaoTom(
-                  icone: Icons.fact_check_outlined,
-                  titulo: 'Verificar dados',
-                  subtitulo: 'Confira se está tudo certo antes de exportar',
-                  onTap: () => ir(TomPreflightPage(torneioId: torneioAtual.id)),
-                ),
-                const SizedBox(height: 10),
-                _AcaoTom(
-                  icone: Icons.edit_document,
-                  titulo: 'Editar metadados',
-                  subtitulo: 'Informações do evento no arquivo TOM',
-                  onTap: () =>
-                      ir(TomTdfMetadataPage(torneioId: torneioAtual.id)),
-                ),
-                const SizedBox(height: 10),
-                _AcaoTom(
-                  icone: Icons.file_download_outlined,
-                  titulo: 'Exportar torneio .tdf',
-                  subtitulo: 'Gera o arquivo para o TOM',
-                  destaque: true,
-                  onTap: () => ir(TomTdfPage(torneioId: torneioAtual.id)),
-                ),
-              ],
-            ),
-          ),
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: TcgTheme.card,
+    builder: (sheetContext) {
+      void ir(Widget pagina) {
+        Navigator.pop(sheetContext);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => pagina),
         );
-      },
-    );
-  }
+      }
+
+      return SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'TOM / TDF',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Prepare e exporte o torneio para o Tournament Operations Manager.',
+                style: TextStyle(color: TcgTheme.muted, height: 1.4),
+              ),
+              const SizedBox(height: 18),
+              _AcaoTom(
+                icone: Icons.fact_check_outlined,
+                titulo: 'Verificar dados',
+                subtitulo: 'Confira se está tudo certo antes de exportar',
+                onTap: () => ir(TomPreflightPage(torneioId: torneioAtual.id)),
+              ),
+              const SizedBox(height: 10),
+              _AcaoTom(
+                icone: Icons.edit_document,
+                titulo: 'Editar metadados',
+                subtitulo: 'Informações do evento no arquivo TOM',
+                onTap: () =>
+                    ir(TomTdfMetadataPage(torneioId: torneioAtual.id)),
+              ),
+              const SizedBox(height: 10),
+              _AcaoTom(
+                icone: Icons.file_download_outlined,
+                titulo: 'Exportar torneio .tdf',
+                subtitulo: 'Gera o arquivo para o TOM',
+                destaque: true,
+                onTap: () => ir(TomTdfPage(torneioId: torneioAtual.id)),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   // ============================================================
   // Estrutura da página

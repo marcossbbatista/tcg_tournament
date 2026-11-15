@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Identidade visual compartilhada do aplicativo (tema escuro + verde).
 class TcgTheme {
@@ -75,7 +76,7 @@ class TcgTheme {
       canvasColor: fundo,
       fontFamily: 'Roboto',
 
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: fundo,
         foregroundColor: texto,
         surfaceTintColor: Colors.transparent,
@@ -83,14 +84,15 @@ class TcgTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         systemOverlayStyle: overlay,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.outfit(
           fontSize: 21,
           fontWeight: FontWeight.w800,
           color: texto,
         ),
       ),
 
-      textTheme: const TextTheme(
+     textTheme: GoogleFonts.outfitTextTheme(
+      const TextTheme(
         headlineSmall: TextStyle(
           fontWeight: FontWeight.w800,
           color: texto,
@@ -109,6 +111,7 @@ class TcgTheme {
         bodyMedium: TextStyle(color: texto, fontSize: 14),
         bodySmall: TextStyle(color: muted, fontSize: 12),
       ),
+    ),
 
       iconTheme: const IconThemeData(color: Colors.white70),
 
@@ -317,21 +320,27 @@ class TcgGradientButton extends StatelessWidget {
                   ),
                 )
               : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (icone != null) ...[
-                      Icon(icone, size: 20),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      texto.toUpperCase(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icone != null) ...[
+                    Icon(icone, size: 20),
+                    const SizedBox(width: 8),
+                  ],
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        texto.toUpperCase(),
+                        maxLines: 1,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
         ),
       ),
     );

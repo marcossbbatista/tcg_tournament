@@ -22,12 +22,43 @@ class HomeAdmPage extends StatefulWidget {
 class _HomeAdmPageState extends State<HomeAdmPage> {
   final TorneioService _torneioService = TorneioService();
 
+  // ============================================================
+  // Ações
+  // ============================================================
+
   Future<void> _abrirPerfil() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PerfilPage()),
     );
     if (mounted) setState(() {});
+  }
+
+  Future<void> _confirmarSair() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => Theme(
+        data: TcgTheme.data(),
+        child: AlertDialog(
+          title: const Text('Sair da conta'),
+          content: const Text('Deseja realmente sair do aplicativo?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sair'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    await _logout();
   }
 
   Future<void> _logout() async {
@@ -67,6 +98,133 @@ class _HomeAdmPageState extends State<HomeAdmPage> {
     );
   }
 
+  // ============================================================
+  // Menu da conta
+  // ============================================================
+
+  String _iniciais(String nome) {
+    final partes = nome
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+
+    if (partes.isEmpty) return '?';
+    if (partes.length == 1) return partes.first[0].toUpperCase();
+
+    return (partes.first[0] + partes.last[0]).toUpperCase();
+  }
+
+  void _abrirMenuConta() {
+  final usuario = UsuarioSession.usuario;
+  if (usuario == null) return;
+
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: TcgTheme.card,
+    builder: (sheetContext) => Theme(
+      data: TcgTheme.data(),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ===== Identidade =====
+              _AvatarConta(
+                iniciais: _iniciais(usuario.nome),
+                tamanho: 64,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                usuario.nome,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                usuario.email,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: TcgTheme.muted),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0x263DDC84),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.admin_panel_settings_outlined,
+                      size: 15,
+                      color: TcgTheme.verde,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Organizador',
+                      style: TextStyle(
+                        color: TcgTheme.verde,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // ===== Opções =====
+              _OpcaoMenu(
+                icone: Icons.account_circle_outlined,
+                titulo: 'Meu perfil',
+                subtitulo: 'Dados oficiais e Player ID',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _abrirPerfil();
+                },
+              ),
+              const SizedBox(height: 10),
+              _OpcaoMenu(
+                icone: Icons.logout_rounded,
+                titulo: 'Sair',
+                subtitulo: 'Encerrar a sessão neste aparelho',
+                perigo: true,
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _confirmarSair();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+  // ============================================================
+  // Build
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
     final usuario = UsuarioSession.usuario;
@@ -95,25 +253,26 @@ class _HomeAdmPageState extends State<HomeAdmPage> {
                     titulo: 'Meus torneios',
                     actions: [
                       Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.only(right: 12),
                         child: Image.asset(
                           'assets/images/pokeduelix_logo.png',
                           width: 32,
                           height: 32,
                         ),
                       ),
-                      IconButton(
-                        tooltip: 'Meu perfil',
-                        onPressed: _abrirPerfil,
-                        icon: const Icon(
-                          Icons.account_circle_outlined,
-                          color: Colors.white,
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Tooltip(
+                          message: 'Minha conta',
+                          child: GestureDetector(
+                            onTap: _abrirMenuConta,
+                            child: _AvatarConta(
+                              iniciais: _iniciais(usuario.nome),
+                              tamanho: 40,
+                              borda: true,
+                            ),
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        tooltip: 'Sair',
-                        onPressed: _logout,
-                        icon: const Icon(Icons.logout, color: Colors.white),
                       ),
                     ],
                   ),
@@ -200,6 +359,152 @@ class _HomeAdmPageState extends State<HomeAdmPage> {
           onPressed: _criarTorneio,
           icon: const Icon(Icons.add),
           label: const Text('Criar torneio'),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// Avatar da conta (iniciais)
+// ============================================================
+
+class _AvatarConta extends StatelessWidget {
+  final String iniciais;
+  final double tamanho;
+  final bool borda;
+
+  /// Quando existir foto de perfil, é só passar a URL aqui.
+  final String? fotoUrl;
+
+  const _AvatarConta({
+    required this.iniciais,
+    required this.tamanho,
+    this.borda = false,
+    this.fotoUrl,
+  });
+
+  Widget _texto() {
+    return Text(
+      iniciais,
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: tamanho * 0.36,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final temFoto = fotoUrl != null && fotoUrl!.isNotEmpty;
+
+    return Container(
+      width: tamanho,
+      height: tamanho,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: TcgTheme.gradient,
+        border: borda
+            ? Border.all(color: const Color(0x99FFFFFF), width: 1.5)
+            : null,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x553DDC84),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: temFoto
+          ? ClipOval(
+              child: Image.network(
+                fotoUrl!,
+                width: tamanho,
+                height: tamanho,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _texto(),
+              ),
+            )
+          : _texto(),
+    );
+  }
+}
+
+// ============================================================
+// Opção do menu
+// ============================================================
+
+class _OpcaoMenu extends StatelessWidget {
+  final IconData icone;
+  final String titulo;
+  final String subtitulo;
+  final VoidCallback onTap;
+  final bool perigo;
+
+  const _OpcaoMenu({
+    required this.icone,
+    required this.titulo,
+    required this.subtitulo,
+    required this.onTap,
+    this.perigo = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cor = perigo ? const Color(0xFFFF6B6B) : TcgTheme.verde;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: perigo ? const Color(0x14FF6B6B) : const Color(0x14FFFFFF),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: perigo ? const Color(0x33FF6B6B) : const Color(0x26FFFFFF),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: cor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icone, color: cor),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titulo,
+                    style: TextStyle(
+                      color: perigo ? cor : Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitulo,
+                    style: const TextStyle(
+                      color: TcgTheme.muted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white38),
+          ],
         ),
       ),
     );
