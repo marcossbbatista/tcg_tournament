@@ -13,34 +13,50 @@ class CriarTorneioPage extends StatefulWidget {
 }
 
 class _CriarTorneioPageState extends State<CriarTorneioPage> {
-  final _formKey = GlobalKey<FormState>();
+  static const int _totalPassos = 3;
+  static const int _maxRodadas = 20;
 
-  final TextEditingController _nomeController = TextEditingController();
-  final TextEditingController _quantidadeRodadasController =
-      TextEditingController();
+  static const Map<String, String> _nomesFormatoJogo = {
+    'standard': 'Standard',
+    'expanded': 'Expanded',
+    'limited': 'Limited / Selado',
+  };
 
+  static const Map<int, String> _nomesTopCut = {
+    0: 'Sem Top Cut',
+    2: 'Top 2',
+    4: 'Top 4',
+    8: 'Top 8',
+  };
+
+  final _formEventoKey = GlobalKey<FormState>();
+  final _formOrganizacaoKey = GlobalKey<FormState>();
+
+  final _nomeController = TextEditingController();
   final _sanctionController = TextEditingController();
   final _organizadorController = TextEditingController();
   final _organizadorPlayerIdController = TextEditingController();
+
+  final TorneioService _torneioService = TorneioService();
+
+  int _passo = 0;
+
   String _tipoEvento = 'custom';
   String _formatoJogo = 'standard';
   String _agrupamento = 'combinado';
   int _temporada = PokemonRulebook.temporadaAtual;
   int _tamanhoTopCut = 0;
-
-  final TorneioService _torneioService = TorneioService();
+  String _formatoSelecionado = 'md3';
+  int _rodadas = 3;
 
   DateTime? _dataSelecionada;
   TimeOfDay? _horarioSelecionado;
-
-  String _formatoSelecionado = 'md3';
 
   bool _salvando = false;
 
   @override
   void dispose() {
     _nomeController.dispose();
-    _quantidadeRodadasController.dispose();
     _sanctionController.dispose();
     _organizadorController.dispose();
     _organizadorPlayerIdController.dispose();
@@ -48,17 +64,43 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
     super.dispose();
   }
 
+  // ============================================================
+  // Navegação entre passos
+  // ============================================================
+
+  void _continuar() {
+    FocusScope.of(context).unfocus();
+
+    if (_passo == 0) {
+      if (!_formEventoKey.currentState!.validate()) return;
+      setState(() => _passo = 1);
+    } else if (_passo == 1) {
+      setState(() => _passo = 2);
+    } else {
+      _salvar();
+    }
+  }
+
+  void _voltarPasso() {
+    FocusScope.of(context).unfocus();
+
+    if (_passo == 0) {
+      Navigator.pop(context);
+    } else {
+      setState(() => _passo--);
+    }
+  }
+
+  // ============================================================
+  // Dados
+  // ============================================================
+
   void _mostrarMensagem(String mensagem) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(mensagem)),
     );
-  }
-
-  void _voltar() {
-    FocusScope.of(context).unfocus();
-    Navigator.pop(context);
   }
 
   String _formatarData(DateTime d) =>
@@ -87,7 +129,7 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
 
     final TimeOfDay? horario = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: _horarioSelecionado ?? TimeOfDay.now(),
     );
 
     if (horario == null || !mounted) return;
@@ -98,7 +140,7 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
   Future<void> _salvar() async {
     if (_salvando) return;
 
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formOrganizacaoKey.currentState!.validate()) return;
 
     if (_dataSelecionada == null) {
       _mostrarMensagem('Selecione a data do torneio.');
@@ -133,7 +175,7 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
         nome: _nomeController.text.trim(),
         dataHora: dataHora,
         formato: _formatoSelecionado,
-        quantidadeRodadas: int.parse(_quantidadeRodadasController.text),
+        quantidadeRodadas: _rodadas,
         criadoPor: usuario.uid,
         sanctionId: _sanctionController.text.trim().isEmpty
             ? null
@@ -165,9 +207,11 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
     }
   }
 
-  // ===== Widgets auxiliares =====
+  // ============================================================
+  // Peças de layout
+  // ============================================================
 
-  Widget _titulo(String texto) {
+  Widget _rotulo(String texto) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
@@ -182,42 +226,702 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
     );
   }
 
-  Widget _dropdown<T>({
-    required String label,
-    required T value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-  }) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      isExpanded: true,
-      dropdownColor: TcgTheme.card,
-      decoration: InputDecoration(labelText: label),
-      items: items,
-      onChanged: onChanged,
+  Widget _cabecalhoPasso(String titulo, String subtitulo) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PASSO ${_passo + 1} DE $_totalPassos',
+            style: const TextStyle(
+              color: TcgTheme.verde,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.6,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            titulo,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitulo,
+            style: const TextStyle(color: TcgTheme.muted, height: 1.4),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _campoSelecao({
-    required String label,
-    required String? valor,
-    required String vazio,
-    required IconData icone,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onTap,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          suffixIcon: Icon(icone),
-        ),
-        child: Text(
-          valor ?? vazio,
-          style: TextStyle(
-            color: valor == null ? Colors.white38 : Colors.white,
+  Widget _barraProgresso() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+      child: Row(
+        children: List.generate(_totalPassos, (i) {
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(right: i == _totalPassos - 1 ? 0 : 6),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                height: 4,
+                decoration: BoxDecoration(
+                  color: i <= _passo ? TcgTheme.verde : Colors.white12,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _tipoTile(
+    String valor,
+    IconData icone,
+    String titulo,
+    String subtitulo,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _OpcaoTile(
+        icone: icone,
+        titulo: titulo,
+        subtitulo: subtitulo,
+        selo: PokemonRulebook.eventoSancionado(valor) ? 'Sancionado' : null,
+        selecionado: _tipoEvento == valor,
+        onTap: () => setState(() => _tipoEvento = valor),
+      ),
+    );
+  }
+
+  // ============================================================
+  // Passo 1: Evento
+  // ============================================================
+
+  Widget _passoEvento() {
+    return Form(
+      key: _formEventoKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _cabecalhoPasso(
+            'Vamos começar',
+            'Dê um nome e escolha o tipo do evento.',
           ),
+
+          TextFormField(
+            controller: _nomeController,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(labelText: 'Nome do torneio'),
+            validator: (valor) {
+              if (valor == null || valor.trim().isEmpty) {
+                return 'Informe o nome do torneio.';
+              }
+
+              return null;
+            },
+          ),
+          const SizedBox(height: 28),
+
+          _rotulo('Tipo de evento'),
+          _tipoTile(
+            'custom',
+            Icons.groups_outlined,
+            'Casual / Custom',
+            'Torneio livre entre amigos',
+          ),
+          _tipoTile(
+            'league_challenge',
+            Icons.emoji_events_outlined,
+            'Desafio de Liga',
+            'League Challenge',
+          ),
+          _tipoTile(
+            'league_cup',
+            Icons.military_tech_outlined,
+            'Copa de Liga',
+            'League Cup',
+          ),
+          _tipoTile(
+            'prerelease',
+            Icons.new_releases_outlined,
+            'Pré-lançamento',
+            'Prerelease',
+          ),
+          const SizedBox(height: 18),
+
+          _rotulo('Formato do Pokémon TCG'),
+          _Pilulas<String>(
+            valor: _formatoJogo,
+            opcoes: _nomesFormatoJogo,
+            onChanged: (v) => setState(() => _formatoJogo = v),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // Passo 2: Regras
+  // ============================================================
+
+  Widget _passoRegras() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _cabecalhoPasso(
+          'Regras da competição',
+          'Defina a temporada, as partidas e as rodadas.',
+        ),
+
+        _rotulo('Temporada oficial'),
+        _Pilulas<int>(
+          valor: _temporada,
+          opcoes: const {2026: '2026', 2027: '2027'},
+          onChanged: (v) => setState(() => _temporada = v),
+        ),
+        const SizedBox(height: 28),
+
+        _rotulo('Formato das partidas'),
+        _Pilulas<String>(
+          valor: _formatoSelecionado,
+          opcoes: const {'md1': 'MD1', 'md3': 'MD3'},
+          onChanged: (v) => setState(() => _formatoSelecionado = v),
+        ),
+        const SizedBox(height: 28),
+
+        _rotulo('Rodadas Swiss'),
+        _Contador(
+          valor: _rodadas,
+          onMenos: _rodadas > 1 ? () => setState(() => _rodadas--) : null,
+          onMais:
+              _rodadas < _maxRodadas ? () => setState(() => _rodadas++) : null,
+        ),
+        const SizedBox(height: 28),
+
+        _rotulo('Divisões etárias / Pods'),
+        _OpcaoTile(
+          icone: Icons.merge_type_rounded,
+          titulo: 'Swiss combinado',
+          subtitulo: 'Divisões modificadas',
+          selecionado: _agrupamento == 'combinado',
+          onTap: () => setState(() => _agrupamento = 'combinado'),
+        ),
+        const SizedBox(height: 10),
+        _OpcaoTile(
+          icone: Icons.call_split_rounded,
+          titulo: 'Swiss separado',
+          subtitulo: 'Separado por divisão',
+          selecionado: _agrupamento == 'separado',
+          onTap: () => setState(() => _agrupamento = 'separado'),
+        ),
+        const SizedBox(height: 28),
+
+        _rotulo('Top Cut após o Swiss'),
+        _Pilulas<int>(
+          valor: _tamanhoTopCut,
+          opcoes: _nomesTopCut,
+          onChanged: (v) => setState(() => _tamanhoTopCut = v),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // Passo 3: Data e organização
+  // ============================================================
+
+  Widget _passoFinal() {
+    final sancionado = PokemonRulebook.eventoSancionado(_tipoEvento);
+
+    final nome = _nomeController.text.trim();
+    final dataPrevia = _dataSelecionada ?? DateTime.now();
+    final horaPrevia = _horarioSelecionado ?? TimeOfDay.now();
+
+    final dataHoraPrevia = DateTime(
+      dataPrevia.year,
+      dataPrevia.month,
+      dataPrevia.day,
+      horaPrevia.hour,
+      horaPrevia.minute,
+    );
+
+    final resumo = [
+      _nomesFormatoJogo[_formatoJogo] ?? _formatoJogo,
+      'Temporada $_temporada',
+      '$_rodadas ${_rodadas == 1 ? 'rodada' : 'rodadas'}',
+      _nomesTopCut[_tamanhoTopCut] ?? 'Sem Top Cut',
+    ].join('  •  ');
+
+    return Form(
+      key: _formOrganizacaoKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _cabecalhoPasso(
+            'Quase pronto',
+            'Escolha quando acontece e quem organiza.',
+          ),
+
+          // ===== Pré-visualização =====
+          _rotulo('Como os jogadores vão ver'),
+          IgnorePointer(
+            child: TcgTournamentTile(
+              nome: nome.isEmpty ? 'Nome do torneio' : nome,
+              data: dataHoraPrevia,
+              formato: _formatoSelecionado,
+              status: 'inscricoes',
+              onTap: () {},
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+            child: Text(
+              resumo,
+              style: const TextStyle(
+                color: TcgTheme.muted,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // ===== Data e horário =====
+          _rotulo('Data e horário'),
+          Row(
+            children: [
+              Expanded(
+                child: _CampoSelecao(
+                  label: 'Data',
+                  valor: _dataSelecionada == null
+                      ? null
+                      : _formatarData(_dataSelecionada!),
+                  vazio: 'Selecionar',
+                  icone: Icons.calendar_month,
+                  onTap: _selecionarData,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _CampoSelecao(
+                  label: 'Horário',
+                  valor: _horarioSelecionado?.format(context),
+                  vazio: 'Selecionar',
+                  icone: Icons.access_time,
+                  onTap: _selecionarHorario,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+
+          // ===== Organização =====
+          _rotulo('Organização'),
+
+          if (sancionado) ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0x1FFFB74D),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0x55FFB74D)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: Color(0xFFFFB74D),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Evento sancionado: o Player ID do organizador e o '
+                      'Sanction ID são obrigatórios.',
+                      style: TextStyle(
+                        color: Color(0xFFFFB74D),
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          TextFormField(
+            controller: _organizadorController,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            decoration: const InputDecoration(
+              labelText: 'Nome do organizador',
+              helperText: 'Em branco, usa o seu nome.',
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          TextFormField(
+            controller: _organizadorPlayerIdController,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              labelText:
+                  'Player ID do organizador${sancionado ? ' *' : ''}',
+            ),
+            validator: (v) =>
+                sancionado ? PokemonRulebook.validarIdentificador(v) : null,
+          ),
+          const SizedBox(height: 16),
+
+          TextFormField(
+            controller: _sanctionController,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              labelText: 'Sanction ID do Play! Tools${sancionado ? ' *' : ''}',
+            ),
+            validator: (v) => sancionado && (v == null || v.trim().isEmpty)
+                ? 'Obrigatório para evento sancionado'
+                : null,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Sanction ID não é o código interno de convite. Para eventos '
+            'oficiais, use o código emitido pelo Play! Tools.',
+            style: TextStyle(color: TcgTheme.muted, fontSize: 12, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _conteudoPasso() {
+    switch (_passo) {
+      case 0:
+        return _passoEvento();
+      case 1:
+        return _passoRegras();
+      default:
+        return _passoFinal();
+    }
+  }
+
+  // ============================================================
+  // Build
+  // ============================================================
+
+  @override
+  Widget build(BuildContext context) {
+    final ultimoPasso = _passo == _totalPassos - 1;
+
+    return PopScope(
+      canPop: _passo == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _voltarPasso();
+      },
+      child: TcgTheme.wrap(
+        Scaffold(
+          backgroundColor: TcgTheme.fundo,
+          resizeToAvoidBottomInset: true,
+          body: TcgBackground(
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // Barra fixa no topo
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 16, 0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Voltar',
+                          onPressed: _salvando ? null : _voltarPasso,
+                          icon: const Icon(
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Novo torneio',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  _barraProgresso(),
+
+                  // Conteúdo do passo
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 440),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: SingleChildScrollView(
+                            key: ValueKey(_passo),
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                            child: _conteudoPasso(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Botões fixos embaixo
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 440),
+                      child: Row(
+                        children: [
+                          if (_passo > 0) ...[
+                            SizedBox(
+                              height: 50,
+                              child: OutlinedButton(
+                                onPressed: _salvando ? null : _voltarPasso,
+                                child: const Text('Voltar'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                          ],
+                          Expanded(
+                            child: TcgGradientButton(
+                              texto:
+                                  ultimoPasso ? 'Criar torneio' : 'Continuar',
+                              icone: ultimoPasso
+                                  ? Icons.check_rounded
+                                  : Icons.arrow_forward_rounded,
+                              carregando: _salvando,
+                              onPressed: _continuar,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// Componentes
+// ============================================================
+
+/// Cartão selecionável com ícone, título e subtítulo.
+class _OpcaoTile extends StatelessWidget {
+  final IconData icone;
+  final String titulo;
+  final String subtitulo;
+  final String? selo;
+  final bool selecionado;
+  final VoidCallback onTap;
+
+  const _OpcaoTile({
+    required this.icone,
+    required this.titulo,
+    required this.subtitulo,
+    required this.selecionado,
+    required this.onTap,
+    this.selo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selecionado
+              ? const Color(0x1F3DDC84)
+              : const Color(0x14FFFFFF),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selecionado ? TcgTheme.verde : const Color(0x26FFFFFF),
+            width: selecionado ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: selecionado
+                    ? TcgTheme.verde
+                    : const Color(0x1AFFFFFF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icone,
+                color: selecionado ? TcgTheme.fundo : Colors.white70,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          titulo,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                      if (selo != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0x26FFB74D),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            selo!,
+                            style: const TextStyle(
+                              color: Color(0xFFFFB74D),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitulo,
+                    style: const TextStyle(
+                      color: TcgTheme.muted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              selecionado
+                  ? Icons.check_circle
+                  : Icons.radio_button_unchecked,
+              color: selecionado ? TcgTheme.verde : Colors.white24,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Opções curtas em formato de pílula.
+class _Pilulas<T> extends StatelessWidget {
+  final T valor;
+  final Map<T, String> opcoes;
+  final ValueChanged<T> onChanged;
+
+  const _Pilulas({
+    required this.valor,
+    required this.opcoes,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: opcoes.entries.map((e) {
+        final sel = e.key == valor;
+
+        return GestureDetector(
+          onTap: () => onChanged(e.key),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+            decoration: BoxDecoration(
+              color: sel
+                  ? const Color(0x263DDC84)
+                  : const Color(0x14FFFFFF),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: sel ? TcgTheme.verde : const Color(0x26FFFFFF),
+              ),
+            ),
+            child: Text(
+              e.value,
+              style: TextStyle(
+                color: sel ? TcgTheme.verde : Colors.white70,
+                fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+/// Contador com botões − e +.
+class _Contador extends StatelessWidget {
+  final int valor;
+  final VoidCallback? onMenos;
+  final VoidCallback? onMais;
+
+  const _Contador({
+    required this.valor,
+    required this.onMenos,
+    required this.onMais,
+  });
+
+  Widget _botao(IconData icone, VoidCallback? onTap) {
+    final ativo = onTap != null;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: ativo ? const Color(0x2E3DDC84) : const Color(0x0DFFFFFF),
+        ),
+        child: Icon(
+          icone,
+          color: ativo ? TcgTheme.verde : Colors.white24,
         ),
       ),
     );
@@ -225,375 +929,71 @@ class _CriarTorneioPageState extends State<CriarTorneioPage> {
 
   @override
   Widget build(BuildContext context) {
-    final sancionado = PokemonRulebook.eventoSancionado(_tipoEvento);
-
-    return TcgTheme.wrap(
-      Scaffold(
-        backgroundColor: TcgTheme.fundo,
-        resizeToAvoidBottomInset: true,
-        body: TcgBackground(
-          child: SafeArea(
-            child: Column(
-              children: [
-                // Seta fixa no topo
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-                    child: IconButton(
-                      tooltip: 'Voltar',
-                      onPressed: _voltar,
-                      icon: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0x14FFFFFF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0x26FFFFFF)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _botao(Icons.remove, onMenos),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$valor',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
                 ),
+              ),
+              Text(
+                valor == 1 ? 'rodada' : 'rodadas',
+                style: const TextStyle(color: TcgTheme.muted, fontSize: 12),
+              ),
+            ],
+          ),
+          _botao(Icons.add, onMais),
+        ],
+      ),
+    );
+  }
+}
 
-                // Só esta área rola
-                Expanded(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 440),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // ===== CARD DE VIDRO (só o topo) =====
-                            TcgGlassCard(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 56,
-                                    height: 56,
-                                    decoration: BoxDecoration(
-                                      gradient: TcgTheme.gradient,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: const Icon(
-                                      Icons.add_circle_outline_rounded,
-                                      color: Colors.white,
-                                      size: 28,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  const Text(
-                                    'Novo torneio',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Escolha o formato, a data e as rodadas '
-                                    'da competição.',
-                                    style: TextStyle(
-                                      color: TcgTheme.muted,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+/// Campo que abre um seletor (data, horário).
+class _CampoSelecao extends StatelessWidget {
+  final String label;
+  final String? valor;
+  final String vazio;
+  final IconData icone;
+  final VoidCallback onTap;
 
-                            const SizedBox(height: 24),
+  const _CampoSelecao({
+    required this.label,
+    required this.valor,
+    required this.vazio,
+    required this.icone,
+    required this.onTap,
+  });
 
-                            // ===== FORMULÁRIO (fora do card) =====
-                            Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _titulo('Evento'),
-
-                                  TextFormField(
-                                    controller: _nomeController,
-                                    textCapitalization:
-                                        TextCapitalization.sentences,
-                                    textInputAction: TextInputAction.next,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Nome do torneio',
-                                    ),
-                                    validator: (valor) {
-                                      if (valor == null ||
-                                          valor.trim().isEmpty) {
-                                        return 'Informe o nome do torneio.';
-                                      }
-
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  _dropdown<String>(
-                                    label: 'Tipo de evento',
-                                    value: _tipoEvento,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'custom',
-                                        child: Text('Torneio casual / Custom'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'league_challenge',
-                                        child: Text(
-                                          'Desafio de Liga (League Challenge)',
-                                        ),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'league_cup',
-                                        child: Text(
-                                          'Copa de Liga (League Cup)',
-                                        ),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'prerelease',
-                                        child: Text(
-                                          'Pré-lançamento (Prerelease)',
-                                        ),
-                                      ),
-                                    ],
-                                    onChanged: (v) => setState(
-                                      () => _tipoEvento = v ?? 'custom',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  _dropdown<String>(
-                                    label: 'Formato do Pokémon TCG',
-                                    value: _formatoJogo,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'standard',
-                                        child: Text('TCG Standard'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'expanded',
-                                        child: Text('TCG Expanded'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'limited',
-                                        child: Text('TCG Limited / Selado'),
-                                      ),
-                                    ],
-                                    onChanged: (v) => setState(
-                                      () => _formatoJogo = v ?? 'standard',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  _dropdown<int>(
-                                    label: 'Temporada oficial',
-                                    value: _temporada,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 2026,
-                                        child: Text('2026'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 2027,
-                                        child: Text('2027'),
-                                      ),
-                                    ],
-                                    onChanged: (v) => setState(
-                                      () => _temporada = v ?? 2027,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  _dropdown<String>(
-                                    label: 'Divisões etárias / Pods',
-                                    value: _agrupamento,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'combinado',
-                                        child: Text(
-                                          'Swiss combinado (divisões modificadas)',
-                                        ),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'separado',
-                                        child: Text(
-                                          'Swiss separado por divisão',
-                                        ),
-                                      ),
-                                    ],
-                                    onChanged: (v) => setState(
-                                      () => _agrupamento = v ?? 'combinado',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  _dropdown<int>(
-                                    label: 'Top Cut após Swiss',
-                                    value: _tamanhoTopCut,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 0,
-                                        child: Text('Sem Top Cut'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 2,
-                                        child: Text('Top 2'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 4,
-                                        child: Text('Top 4'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 8,
-                                        child: Text('Top 8'),
-                                      ),
-                                    ],
-                                    onChanged: (v) => setState(
-                                      () => _tamanhoTopCut = v ?? 0,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 28),
-
-                                  _titulo('Organização'),
-
-                                  TextFormField(
-                                    controller: _organizadorController,
-                                    textCapitalization:
-                                        TextCapitalization.words,
-                                    textInputAction: TextInputAction.next,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Nome do organizador',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  TextFormField(
-                                    controller: _organizadorPlayerIdController,
-                                    keyboardType: TextInputType.number,
-                                    textInputAction: TextInputAction.next,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Player ID do organizador',
-                                    ),
-                                    validator: (v) => sancionado
-                                        ? PokemonRulebook.validarIdentificador(v)
-                                        : null,
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  TextFormField(
-                                    controller: _sanctionController,
-                                    textInputAction: TextInputAction.next,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Sanction ID do Play! Tools',
-                                    ),
-                                    validator: (v) => sancionado &&
-                                            (v == null || v.trim().isEmpty)
-                                        ? 'Obrigatório para evento sancionado'
-                                        : null,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Sanction ID não é o código interno de '
-                                    'convite. Para eventos oficiais, use o '
-                                    'código emitido pelo Play! Tools.',
-                                    style: TextStyle(
-                                      color: TcgTheme.muted,
-                                      fontSize: 12,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 28),
-
-                                  _titulo('Partidas'),
-
-                                  _dropdown<String>(
-                                    label: 'Formato',
-                                    value: _formatoSelecionado,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'md1',
-                                        child: Text('MD1'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'md3',
-                                        child: Text('MD3'),
-                                      ),
-                                    ],
-                                    onChanged: (valor) {
-                                      if (valor == null) return;
-
-                                      setState(
-                                        () => _formatoSelecionado = valor,
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  TextFormField(
-                                    controller: _quantidadeRodadasController,
-                                    keyboardType: TextInputType.number,
-                                    textInputAction: TextInputAction.done,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Quantidade de rodadas',
-                                    ),
-                                    validator: (valor) {
-                                      if (valor == null ||
-                                          valor.trim().isEmpty) {
-                                        return 'Informe a quantidade de rodadas.';
-                                      }
-
-                                      final quantidade = int.tryParse(valor);
-
-                                      if (quantidade == null ||
-                                          quantidade <= 0) {
-                                        return 'Informe uma quantidade válida.';
-                                      }
-
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 28),
-
-                                  _titulo('Data e horário'),
-
-                                  _campoSelecao(
-                                    label: 'Data',
-                                    valor: _dataSelecionada == null
-                                        ? null
-                                        : _formatarData(_dataSelecionada!),
-                                    vazio: 'Selecionar data',
-                                    icone: Icons.calendar_month,
-                                    onTap: _selecionarData,
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  _campoSelecao(
-                                    label: 'Horário',
-                                    valor: _horarioSelecionado?.format(context),
-                                    vazio: 'Selecionar horário',
-                                    icone: Icons.access_time,
-                                    onTap: _selecionarHorario,
-                                  ),
-                                  const SizedBox(height: 28),
-
-                                  TcgGradientButton(
-                                    texto: 'Criar torneio',
-                                    carregando: _salvando,
-                                    onPressed: _salvar,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: Icon(icone, size: 20),
+        ),
+        child: Text(
+          valor ?? vazio,
+          style: TextStyle(
+            color: valor == null ? Colors.white38 : Colors.white,
           ),
         ),
       ),
