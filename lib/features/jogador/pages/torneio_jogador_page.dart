@@ -5,10 +5,18 @@ import '../../../core/session/usuario_session.dart';
 import '../../partida/models/partida_model.dart';
 import '../../partida/pages/informar_resultado_page.dart';
 import '../../partida/services/partida_service.dart';
+import '../../partida/services/rodada_service.dart';
+import '../../torneio/models/classificacao_jogador_model.dart';
+import '../../torneio/models/torneio_model.dart';
+import '../../torneio/pages/classificacao_page.dart';
+import '../../torneio/services/torneio_service.dart';
 import '../models/torneio_jogador_model.dart';
 
 const Color _amarelo = Color(0xFFFFB74D);
 const Color _vermelho = Color(0xFFFF6B6B);
+const Color _ouro = Color(0xFFFFD54F);
+const Color _prata = Color(0xFFCFD8DC);
+const Color _bronze = Color(0xFFE0955B);
 
 class TorneioJogadorPage extends StatefulWidget {
   final TorneioJogadorModel item;
@@ -24,6 +32,40 @@ class TorneioJogadorPage extends StatefulWidget {
 
 class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
   final PartidaService _partidaService = PartidaService();
+
+  late final Stream<TorneioModel?> _torneioStream;
+  late Future<List<ClassificacaoJogadorModel>> _classificacao;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _torneioStream = TorneioService().observarTorneio(widget.item.torneio.id);
+    _carregarClassificacao();
+  }
+
+  void _carregarClassificacao() {
+    _classificacao = RodadaService().buscarClassificacao(
+      torneioId: widget.item.torneio.id,
+    );
+  }
+
+  void _atualizar() {
+    setState(_carregarClassificacao);
+  }
+
+  // ============================================================
+  // Formatação
+  // ============================================================
+
+  String _formatarData(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/'
+      '${d.month.toString().padLeft(2, '0')}/'
+      '${d.year}';
+
+  String _formatarHorario(DateTime d) =>
+      '${d.hour.toString().padLeft(2, '0')}:'
+      '${d.minute.toString().padLeft(2, '0')}';
 
   String _statusInscricao() {
     switch (widget.item.status) {
@@ -55,7 +97,7 @@ class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
   // Estrutura
   // ============================================================
 
-  Widget _estrutura(Widget corpo) {
+  Widget _estrutura(Widget corpo, {bool mostrarAtualizar = false}) {
     return TcgTheme.wrap(
       Scaffold(
         backgroundColor: TcgTheme.fundo,
@@ -63,19 +105,56 @@ class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
           child: SafeArea(
             child: Column(
               children: [
-                // Seta fixa no topo
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-                    child: IconButton(
-                      tooltip: 'Voltar',
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white,
+                // Barra fixa no topo
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 16, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Voltar',
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
+                      const Spacer(),
+                      if (mostrarAtualizar)
+                        GestureDetector(
+                          onTap: _atualizar,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 9,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0x1AFFFFFF),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: const Color(0x33FFFFFF),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.refresh,
+                                  size: 18,
+                                  color: TcgTheme.verde,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Atualizar',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 Expanded(child: corpo),
@@ -87,26 +166,49 @@ class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
     );
   }
 
-  Widget _rotulo(String texto) {
+  Widget _rotulo(String texto, {int? quantidade}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        texto.toUpperCase(),
-        style: const TextStyle(
-          color: TcgTheme.muted,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.4,
-        ),
+      child: Row(
+        children: [
+          Text(
+            texto.toUpperCase(),
+            style: const TextStyle(
+              color: TcgTheme.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.4,
+            ),
+          ),
+          if (quantidade != null) ...[
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: TcgTheme.verde.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '$quantidade',
+                style: const TextStyle(
+                  color: TcgTheme.verde,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _cabecalho() {
-    final torneio = widget.item.torneio;
-    final cor = _corInscricao();
+  // ============================================================
+  // Cabeçalho
+  // ============================================================
 
-    final faseEliminatoria = torneio.rodadaAtual > torneio.quantidadeRodadas;
+  Widget _cabecalho(TorneioModel torneio) {
+    final cor = _corInscricao();
 
     return TcgGlassCard(
       padding: const EdgeInsets.all(22),
@@ -196,14 +298,21 @@ class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
             runSpacing: 8,
             children: [
               _InfoChip(
+                icone: Icons.calendar_month,
+                texto: _formatarData(torneio.dataHora),
+              ),
+              _InfoChip(
+                icone: Icons.access_time,
+                texto: _formatarHorario(torneio.dataHora),
+              ),
+              _InfoChip(
                 icone: Icons.sports_esports,
                 texto: torneio.formato.toUpperCase(),
               ),
               _InfoChip(
-                icone: Icons.flag,
-                texto: faseEliminatoria
-                    ? 'Fase eliminatória'
-                    : 'Rodada ${torneio.rodadaAtual}/${torneio.quantidadeRodadas}',
+                icone: Icons.repeat,
+                texto:
+                    '${torneio.quantidadeRodadas} ${torneio.quantidadeRodadas == 1 ? 'rodada' : 'rodadas'}',
               ),
             ],
           ),
@@ -212,12 +321,15 @@ class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
     );
   }
 
+  // ============================================================
+  // Sua partida
+  // ============================================================
+
   Widget _conteudoPartida(
     TorneioJogadorModel item,
+    TorneioModel torneio,
     dynamic usuario,
   ) {
-    final torneio = item.torneio;
-
     if (item.status != 'aprovado') {
       return _AguardandoAprovacao(status: item.status);
     }
@@ -227,6 +339,14 @@ class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
         icone: Icons.hourglass_empty,
         mensagem: 'O torneio ainda não foi iniciado.',
         cor: _amarelo,
+      );
+    }
+
+    if (torneio.status == 'finalizado') {
+      return _EstadoCard(
+        icone: Icons.emoji_events_rounded,
+        mensagem: 'Torneio finalizado. Confira a classificação final abaixo.',
+        cor: TcgTheme.verde,
       );
     }
 
@@ -281,6 +401,10 @@ class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
     );
   }
 
+  // ============================================================
+  // Build
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
     final usuario = UsuarioSession.usuario;
@@ -296,25 +420,816 @@ class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
       );
     }
 
-    return _estrutura(
-      Align(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _cabecalho(),
-                const SizedBox(height: 28),
-                _rotulo('Sua partida'),
-                _conteudoPartida(widget.item, usuario),
-              ],
+    return StreamBuilder<TorneioModel?>(
+      stream: _torneioStream,
+      builder: (context, snapshot) {
+        // Enquanto não chega o torneio ao vivo, usa o que veio da Home.
+        final torneio = snapshot.data ?? widget.item.torneio;
+
+        final aprovado = widget.item.status == 'aprovado';
+        final iniciado = torneio.status != 'inscricoes';
+        final emAndamento = torneio.status == 'em_andamento';
+
+        return _estrutura(
+          mostrarAtualizar: aprovado && iniciado,
+          Align(
+            alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _cabecalho(torneio),
+
+                    const SizedBox(height: 28),
+                    _rotulo('Progresso'),
+                    _CardProgresso(torneio: torneio),
+
+                    const SizedBox(height: 28),
+                    _rotulo('Sua partida'),
+                    _conteudoPartida(widget.item, torneio, usuario),
+
+                    if (aprovado && emAndamento) ...[
+                      const SizedBox(height: 28),
+                      _OutrasMesas(
+                        torneioId: torneio.id,
+                        rodada: torneio.rodadaAtual,
+                        meuUid: usuario.uid,
+                      ),
+                    ],
+
+                    if (aprovado && iniciado) ...[
+                      const SizedBox(height: 28),
+                      _rotulo('Classificação'),
+                      _CardClassificacao(
+                        futuro: _classificacao,
+                        meuNome: usuario.nome,
+                        onVerCompleta: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ClassificacaoPage(
+                                torneioId: torneio.id,
+                                nomeTorneio: torneio.nome,
+                                classificacaoFinal:
+                                    torneio.status == 'finalizado',
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
+        );
+      },
+    );
+  }
+}
+
+// ============================================================
+// Progresso (linha do tempo)
+// ============================================================
+
+enum _EstadoEtapa { feita, atual, pendente }
+
+class _Etapa {
+  final String rotulo;
+  final IconData? icone;
+  final _EstadoEtapa estado;
+
+  const _Etapa({required this.rotulo, required this.estado, this.icone});
+}
+
+class _CardProgresso extends StatelessWidget {
+  final TorneioModel torneio;
+
+  const _CardProgresso({required this.torneio});
+
+  bool get _emAndamento => torneio.status == 'em_andamento';
+  bool get _finalizado => torneio.status == 'finalizado';
+  bool get _faseTopCut =>
+      _emAndamento && torneio.rodadaAtual > torneio.quantidadeRodadas;
+
+  List<_Etapa> _etapas() {
+    final etapas = <_Etapa>[];
+
+    for (var i = 1; i <= torneio.quantidadeRodadas; i++) {
+      _EstadoEtapa estado;
+
+      if (_finalizado || (_emAndamento && i < torneio.rodadaAtual)) {
+        estado = _EstadoEtapa.feita;
+      } else if (_emAndamento && i == torneio.rodadaAtual) {
+        estado = _EstadoEtapa.atual;
+      } else {
+        estado = _EstadoEtapa.pendente;
+      }
+
+      etapas.add(_Etapa(rotulo: 'R$i', estado: estado));
+    }
+
+    if (torneio.tamanhoTopCut > 0) {
+      final estado = _finalizado || torneio.topcutConcluido
+          ? _EstadoEtapa.feita
+          : (_faseTopCut ? _EstadoEtapa.atual : _EstadoEtapa.pendente);
+
+      etapas.add(
+        _Etapa(
+          rotulo: 'Top ${torneio.tamanhoTopCut}',
+          icone: Icons.account_tree_rounded,
+          estado: estado,
         ),
+      );
+    }
+
+    etapas.add(
+      _Etapa(
+        rotulo: 'Final',
+        icone: Icons.emoji_events_rounded,
+        estado: _finalizado ? _EstadoEtapa.feita : _EstadoEtapa.pendente,
       ),
+    );
+
+    return etapas;
+  }
+
+  String _resumo() {
+    if (_finalizado) return 'Torneio concluído';
+    if (_faseTopCut) return 'Fase eliminatória';
+    if (_emAndamento) {
+      return 'Rodada ${torneio.rodadaAtual} de ${torneio.quantidadeRodadas}';
+    }
+    return 'Aguardando início';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final etapas = _etapas();
+    final feitas = etapas.where((e) => e.estado == _EstadoEtapa.feita).length;
+    final fracao = feitas / etapas.length;
+
+    return TcgGlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _resumo(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Text(
+                '${(fracao * 100).round()}%',
+                style: const TextStyle(
+                  color: TcgTheme.verde,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: fracao,
+              minHeight: 6,
+              backgroundColor: Colors.white12,
+              valueColor: const AlwaysStoppedAnimation(TcgTheme.verde),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 10,
+            runSpacing: 12,
+            children: etapas.map((e) => _NoEtapa(etapa: e)).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoEtapa extends StatelessWidget {
+  final _Etapa etapa;
+
+  const _NoEtapa({required this.etapa});
+
+  @override
+  Widget build(BuildContext context) {
+    final feita = etapa.estado == _EstadoEtapa.feita;
+    final atual = etapa.estado == _EstadoEtapa.atual;
+
+    Widget conteudo;
+
+    if (feita) {
+      conteudo = Icon(
+        etapa.icone ?? Icons.check_rounded,
+        size: 20,
+        color: TcgTheme.fundo,
+      );
+    } else if (etapa.icone != null) {
+      conteudo = Icon(
+        etapa.icone,
+        size: 20,
+        color: atual ? TcgTheme.verde : Colors.white38,
+      );
+    } else {
+      conteudo = Text(
+        etapa.rotulo.substring(1),
+        style: TextStyle(
+          color: atual ? TcgTheme.verde : Colors.white38,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: 48,
+      child: Column(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: feita ? TcgTheme.gradient : null,
+              color: feita
+                  ? null
+                  : (atual
+                      ? const Color(0x333DDC84)
+                      : const Color(0x14FFFFFF)),
+              border: Border.all(
+                color: feita
+                    ? Colors.transparent
+                    : (atual ? TcgTheme.verde : const Color(0x26FFFFFF)),
+                width: atual ? 2 : 1,
+              ),
+              boxShadow: atual
+                  ? const [
+                      BoxShadow(
+                        color: Color(0x663DDC84),
+                        blurRadius: 14,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: conteudo,
+          ),
+          const SizedBox(height: 5),
+          Text(
+            etapa.rotulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: atual ? TcgTheme.verde : TcgTheme.muted,
+              fontSize: 10,
+              fontWeight: atual ? FontWeight.w800 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// Outras mesas da rodada
+// ============================================================
+
+class _OutrasMesas extends StatefulWidget {
+  final String torneioId;
+  final int rodada;
+  final String meuUid;
+
+  const _OutrasMesas({
+    required this.torneioId,
+    required this.rodada,
+    required this.meuUid,
+  });
+
+  @override
+  State<_OutrasMesas> createState() => _OutrasMesasState();
+}
+
+class _OutrasMesasState extends State<_OutrasMesas> {
+  static const int _limite = 4;
+
+  late Stream<List<PartidaModel>> _stream;
+  bool _todas = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _assinar();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OutrasMesas antigo) {
+    super.didUpdateWidget(antigo);
+
+    if (antigo.rodada != widget.rodada ||
+        antigo.torneioId != widget.torneioId) {
+      _assinar();
+    }
+  }
+
+  void _assinar() {
+    _stream = PartidaService().observarPartidasDaRodada(
+      torneioId: widget.torneioId,
+      rodada: widget.rodada,
+    );
+  }
+
+  Widget _rotuloComContador(int quantidade) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          const Text(
+            'OUTRAS MESAS',
+            style: TextStyle(
+              color: TcgTheme.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.4,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: TcgTheme.verde.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '$quantidade',
+              style: const TextStyle(
+                color: TcgTheme.verde,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<PartidaModel>>(
+      stream: _stream,
+      builder: (context, snapshot) {
+        // Sem permissão ou sem dados: a seção simplesmente não aparece.
+        if (snapshot.hasError || !snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+
+        final outras = snapshot.data!
+            .where(
+              (p) =>
+                  p.jogador1Uid != widget.meuUid &&
+                  p.jogador2Uid != widget.meuUid,
+            )
+            .toList()
+          ..sort((a, b) => a.mesa.compareTo(b.mesa));
+
+        if (outras.isEmpty) return const SizedBox.shrink();
+
+        final visiveis =
+            _todas || outras.length <= _limite ? outras : outras.take(_limite);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _rotuloComContador(outras.length),
+            ...visiveis.map((p) => _MesaCompacta(partida: p)),
+            if (outras.length > _limite)
+              TextButton.icon(
+                onPressed: () => setState(() => _todas = !_todas),
+                icon: Icon(
+                  _todas
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                ),
+                label: Text(
+                  _todas ? 'Mostrar menos' : 'Ver todas (${outras.length})',
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MesaCompacta extends StatelessWidget {
+  final PartidaModel partida;
+
+  const _MesaCompacta({required this.partida});
+
+  String get _statusTexto {
+    switch (partida.status) {
+      case 'aguardando':
+        return 'Aguardando';
+      case 'em_andamento':
+        return 'Em andamento';
+      case 'aguardando_confirmacao':
+        return 'Confirmando';
+      case 'finalizada':
+        return 'Finalizada';
+      case 'contestada':
+        return 'Contestada';
+      default:
+        return partida.status;
+    }
+  }
+
+  Color get _statusCor {
+    switch (partida.status) {
+      case 'finalizada':
+        return TcgTheme.verde;
+      case 'contestada':
+        return _vermelho;
+      case 'aguardando_confirmacao':
+        return _amarelo;
+      case 'em_andamento':
+        return Colors.white;
+      default:
+        return Colors.white54;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cor = _statusCor;
+
+    // ===== BYE =====
+    if (partida.bye) {
+      return TcgGlassCard(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            _Selo(texto: 'MESA ${partida.mesa}', cor: _amarelo),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                partida.jogador1Nome,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const _Selo(texto: 'BYE', cor: _amarelo),
+          ],
+        ),
+      );
+    }
+
+    return TcgGlassCard(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _Selo(texto: 'MESA ${partida.mesa}', cor: TcgTheme.verde),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cor.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _statusTexto,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: cor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  partida.jogador1Nome,
+                  maxLines: 2,
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0x14FFFFFF),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0x26FFFFFF)),
+                ),
+                child: Text(
+                  '${partida.placarJogador1} – ${partida.placarJogador2}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  partida.jogador2Nome ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// Classificação (resumo)
+// ============================================================
+
+class _CardClassificacao extends StatelessWidget {
+  final Future<List<ClassificacaoJogadorModel>> futuro;
+  final String meuNome;
+  final VoidCallback onVerCompleta;
+
+  const _CardClassificacao({
+    required this.futuro,
+    required this.meuNome,
+    required this.onVerCompleta,
+  });
+
+  Color _corPosicao(int pos) {
+    switch (pos) {
+      case 1:
+        return _ouro;
+      case 2:
+        return _prata;
+      case 3:
+        return _bronze;
+      default:
+        return TcgTheme.verde;
+    }
+  }
+
+  String _normalizar(String s) => s.trim().toLowerCase();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<ClassificacaoJogadorModel>>(
+      future: futuro,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const TcgGlassCard(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final lista = snapshot.data ?? [];
+
+        if (snapshot.hasError || lista.isEmpty) {
+          return TcgGlassCard(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.leaderboard_outlined,
+                  size: 36,
+                  color: Colors.white24,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  snapshot.hasError
+                      ? 'Não foi possível carregar a classificação.'
+                      : 'A classificação aparece depois da primeira rodada.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: TcgTheme.muted, height: 1.4),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Minha posição (procura pelo nome).
+        final indice = lista.indexWhere(
+          (j) => _normalizar(j.nome) == _normalizar(meuNome),
+        );
+
+        final minhaPosicao = indice >= 0 ? indice + 1 : null;
+        final eu = indice >= 0 ? lista[indice] : null;
+
+        final top = lista.take(3).toList();
+
+        return TcgGlassCard(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (eu != null && minhaPosicao != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0x1F3DDC84),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: TcgTheme.verde.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _corPosicao(minhaPosicao)
+                              .withValues(alpha: 0.18),
+                          border: Border.all(
+                            color: _corPosicao(minhaPosicao),
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          '$minhaPosicaoº',
+                          style: TextStyle(
+                            color: _corPosicao(minhaPosicao),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Sua posição',
+                              style: TextStyle(
+                                color: TcgTheme.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${eu.vitorias}V • ${eu.derrotas}D • ${eu.empates}E',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${eu.pontos}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              height: 1,
+                            ),
+                          ),
+                          const Text(
+                            'pts',
+                            style: TextStyle(
+                              color: TcgTheme.muted,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              const Text(
+                'TOP 3',
+                style: TextStyle(
+                  color: TcgTheme.muted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ...List.generate(top.length, (i) {
+                final j = top[i];
+                final cor = _corPosicao(i + 1);
+                final souEu = i + 1 == minhaPosicao;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 28,
+                        child: Text(
+                          '${i + 1}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: cor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _AvatarJogador(nome: j.nome, tamanho: 36, cor: cor),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          j.nome,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight:
+                                souEu ? FontWeight.w800 : FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${j.pontos} pts',
+                        style: TextStyle(
+                          color: cor,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: onVerCompleta,
+                icon: const Icon(Icons.leaderboard),
+                label: const Text('Ver classificação completa'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
