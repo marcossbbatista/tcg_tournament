@@ -1,3 +1,4 @@
+import 'package:tcg_tournament/features/auth/pages/verificar_email_page.dart';
 import 'package:flutter/services.dart';
 import 'package:tcg_tournament/core/responsive/responsive_body.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
@@ -112,6 +113,17 @@ Future<void> _processarLogin(
 
   if (usuarioFirebase == null) {
     throw Exception('Não foi possível identificar o usuário.');
+  }
+
+  // Contas criadas por senha só entram após validar seu endereço de e-mail.
+  await usuarioFirebase.reload();
+  final comSenha = usuarioFirebase.providerData.any((p) => p.providerId == 'password');
+  if (comSenha && !FirebaseAuth.instance.currentUser!.emailVerified) {
+    if (!mounted) return;
+    final confirmado = await Navigator.push<bool>(
+      context, MaterialPageRoute(builder: (_) => const VerificarEmailPage()),
+    );
+    if (confirmado != true) return;
   }
 
   final usuario = criarUsuarioGoogle

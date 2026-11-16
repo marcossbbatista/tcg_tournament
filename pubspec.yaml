@@ -38,6 +38,7 @@ dependencies:
   firebase_core: ^4.15.0
   firebase_auth: ^6.7.0
   cloud_firestore: ^6.10.0
+  cloud_functions: ^6.5.1
   google_sign_in: ^7.2.0
   xml: ^6.6.1
   file_picker: ^12.3.0
