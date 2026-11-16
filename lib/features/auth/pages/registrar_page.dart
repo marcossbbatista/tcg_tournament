@@ -1,4 +1,3 @@
-import 'package:tcg_tournament/features/auth/pages/verificar_email_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tcg_tournament/core/session/usuario_session.dart';
@@ -151,13 +150,7 @@ class _RegistrarPageState extends State<RegistrarPage> {
 
       await _usuarioService.criarUsuario(usuario);
 
-      // Exige confirmação por código antes de acessar o aplicativo.
-      if (!mounted) return;
-      final confirmado = await Navigator.push<bool>(
-        context, MaterialPageRoute(builder: (_) => const VerificarEmailPage()),
-      );
-      if (confirmado != true) return;
-
+      // Inicia a sessão do usuário.
       UsuarioSession.iniciar(usuario);
 
       if (!mounted) return;

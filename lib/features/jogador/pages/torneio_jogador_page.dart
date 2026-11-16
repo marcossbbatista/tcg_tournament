@@ -1,4 +1,3 @@
-import '../../deck/pages/importar_deck_page.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -308,14 +307,6 @@ class _TorneioJogadorPageState extends State<TorneioJogadorPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _cabecalho(),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => ImportarDeckPage(torneioId: widget.item.torneio.id),
-                  )),
-                  icon: const Icon(Icons.content_paste, color: TcgTheme.verde),
-                  label: const Text('Informar deck / Importar do TCG Live'),
-                ),
                 const SizedBox(height: 28),
                 _rotulo('Sua partida'),
                 _conteudoPartida(widget.item, usuario),

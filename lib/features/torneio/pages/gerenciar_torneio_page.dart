@@ -11,7 +11,6 @@ import '../../jogador/pages/gerenciar_jogadores_page.dart';
 
 import '../../partida/pages/montar_primeira_rodada_page.dart';
 import '../../partida/pages/gerenciar_rodada_page.dart';
-import '../../partida/pages/detalhes_rodada_page.dart';
 import '../../partida/services/rodada_service.dart';
 import '../../partida/services/topcut_service.dart';
 
@@ -742,9 +741,8 @@ class _Etapa {
   final String rotulo;
   final IconData? icone;
   final _EstadoEtapa estado;
-  final int? numeroRodada;
 
-  const _Etapa({required this.rotulo, required this.estado, this.icone, this.numeroRodada});
+  const _Etapa({required this.rotulo, required this.estado, this.icone});
 }
 
 class _CardProgresso extends StatelessWidget {
@@ -771,7 +769,7 @@ class _CardProgresso extends StatelessWidget {
         estado = _EstadoEtapa.pendente;
       }
 
-      etapas.add(_Etapa(rotulo: 'R$i', estado: estado, numeroRodada: i));
+      etapas.add(_Etapa(rotulo: 'R$i', estado: estado));
     }
 
     if (torneio.tamanhoTopCut > 0) {
@@ -855,7 +853,7 @@ class _CardProgresso extends StatelessWidget {
           Wrap(
             spacing: 10,
             runSpacing: 12,
-            children: etapas.map((e) => _NoEtapa(etapa: e, torneioId: torneio.id, torneioNome: torneio.nome)).toList(),
+            children: etapas.map((e) => _NoEtapa(etapa: e)).toList(),
           ),
         ],
       ),
@@ -865,11 +863,8 @@ class _CardProgresso extends StatelessWidget {
 
 class _NoEtapa extends StatelessWidget {
   final _Etapa etapa;
-  final String _torneioId;
-  final String _torneioNome;
 
-  const _NoEtapa({required this.etapa, required String torneioId, required String torneioNome})
-      : _torneioId = torneioId, _torneioNome = torneioNome;
+  const _NoEtapa({required this.etapa});
 
   @override
   Widget build(BuildContext context) {
@@ -900,15 +895,7 @@ class _NoEtapa extends StatelessWidget {
       );
     }
 
-    return InkWell(
-      onTap: etapa.numeroRodada == null ? null : () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => DetalhesRodadaPage(
-          torneioId: _torneioId, nomeTorneio: _torneioNome, numero: etapa.numeroRodada!,
-        )),
-      ),
-      borderRadius: BorderRadius.circular(12),
-      child: SizedBox(
+    return SizedBox(
       width: 48,
       child: Column(
         children: [
@@ -953,7 +940,6 @@ class _NoEtapa extends StatelessWidget {
             ),
           ),
         ],
-      ),
       ),
     );
   }
