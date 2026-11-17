@@ -1,6 +1,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:tcg_tournament/core/session/usuario_session.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -86,6 +87,8 @@ class AuthService {
   // LOGOUT
   Future<void> logout() async {
     await _auth.signOut();
+
+    UsuarioSession.limpar();
   }
 
   Future<void> recuperarSenha(String email) async {

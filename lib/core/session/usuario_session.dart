@@ -1,19 +1,28 @@
+
 import '../../features/auth/models/usuario_model.dart';
 
 class UsuarioSession {
-  static UsuarioModel? usuario;
+  static UsuarioModel? _usuario;
 
-  static bool get estaLogado => usuario != null;
+  static UsuarioModel? get usuario => _usuario;
 
-  static bool get ehAdm => usuario?.tipo == 'adm';
+  static bool get estaLogado => _usuario != null;
 
-  static bool get ehJogador => usuario?.tipo == 'jogador';
+  static bool get ehAdm => _usuario?.tipo == 'adm';
+
+  static bool get ehJogador => _usuario?.tipo == 'jogador';
+
+  static String? get uid => _usuario?.uid;
 
   static void iniciar(UsuarioModel usuarioLogado) {
-    usuario = usuarioLogado;
+    _usuario = usuarioLogado;
+  }
+
+  static void atualizar(UsuarioModel usuarioAtualizado) {
+    _usuario = usuarioAtualizado;
   }
 
   static void limpar() {
-    usuario = null;
+    _usuario = null;
   }
 }

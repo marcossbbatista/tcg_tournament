@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tcg_tournament/core/session/usuario_session.dart';
 
 import '../../torneio/rules/pokemon_rulebook.dart';
 import '../models/usuario_model.dart';
@@ -7,7 +8,16 @@ import '../models/usuario_model.dart';
 class UsuarioService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  
   Future<UsuarioModel?> buscarUsuario(String uid) async {
+    // 1. Verifica se o usuário já está em memória.
+    final usuarioEmCache = UsuarioSession.usuario;
+
+    if (usuarioEmCache != null && usuarioEmCache.uid == uid) {
+      return usuarioEmCache;
+    }
+
+    // 2. Caso não esteja em memória, consulta o Firestore.
     final documento = await _firestore
         .collection('users')
         .doc(uid)
@@ -17,11 +27,17 @@ class UsuarioService {
       return null;
     }
 
-    return UsuarioModel.fromMap(
+    // 3. Converte os dados e salva na sessão.
+    final usuario = UsuarioModel.fromMap(
       documento.id,
       documento.data()!,
     );
+
+    UsuarioSession.iniciar(usuario);
+
+    return usuario;
   }
+
 
   Future<UsuarioModel> buscarOuCriarUsuarioGoogle(
     User usuarioFirebase,
@@ -35,11 +51,15 @@ class UsuarioService {
         final documento = await transaction.get(usuarioRef);
 
         // Preserva os dados e o tipo de usuários já cadastrados.
+        // Se o usuário já existe:
         if (documento.exists && documento.data() != null) {
-          return UsuarioModel.fromMap(
+          final usuario = UsuarioModel.fromMap(
             documento.id,
             documento.data()!,
           );
+
+          UsuarioSession.iniciar(usuario);
+          return usuario;
         }
 
         // Usuários Google completam o Player ID e nascimento em Meu perfil.
@@ -54,6 +74,8 @@ class UsuarioService {
 
         transaction.set(usuarioRef, novoUsuario.toMap());
 
+        UsuarioSession.iniciar(novoUsuario);
+
         return novoUsuario;
       },
     );
@@ -64,6 +86,8 @@ class UsuarioService {
         .collection('users')
         .doc(usuario.uid)
         .set(usuario.toMap());
+
+    UsuarioSession.iniciar(usuario);
   }
 
   /// Atualiza os snapshots das inscrições já existentes para que o TOM
@@ -155,7 +179,7 @@ class UsuarioService {
     } on FirebaseAuthException {
       // O nome usado no aplicativo continua vindo do Firestore.
     }
-
+    UsuarioSession.atualizar(atualizado);
     return atualizado;
   }
 }
