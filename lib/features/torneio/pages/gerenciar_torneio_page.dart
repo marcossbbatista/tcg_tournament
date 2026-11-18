@@ -5,6 +5,7 @@ import 'package:tcg_tournament/features/jogador/service/jogador_torneio_service.
 
 import '../models/torneio_model.dart';
 import '../services/torneio_service.dart';
+import '../widgets/rodada_detalhes_sheet.dart';
 
 import '../../jogador/models/jogador_torneio_model.dart';
 import '../../jogador/pages/gerenciar_jogadores_page.dart';
@@ -142,6 +143,44 @@ class GerenciarTorneioPage extends StatelessWidget {
     );
   }
 
+  /// Abre o painel com os confrontos da rodada tocada no progresso.
+  void _abrirRodada(
+    BuildContext context,
+    TorneioModel torneioAtual,
+    _Etapa etapa,
+  ) {
+    if (etapa.rodada == null) return;
+
+    if (etapa.estado == _EstadoEtapa.pendente) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Esta rodada ainda não começou.')),
+      );
+      return;
+    }
+
+    mostrarDetalhesRodada(
+      context,
+      torneioId: torneioAtual.id,
+      rodadas: List.generate(torneioAtual.rodadaAtual, (i) => i + 1),
+      rodadaInicial: etapa.rodada!,
+      quantidadeSwiss: torneioAtual.quantidadeRodadas,
+      admin: true,
+      onGerenciar: (rodada) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GerenciarRodadaPage(
+              torneioId: torneioAtual.id,
+              nomeTorneio: torneioAtual.nome,
+              rodada: rodada,
+              formato: torneioAtual.formato,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _copiarCodigo(BuildContext context, String codigo) async {
     await Clipboard.setData(ClipboardData(text: codigo));
 
@@ -153,72 +192,73 @@ class GerenciarTorneioPage extends StatelessWidget {
   }
 
   void _abrirFerramentasTom(BuildContext context, TorneioModel torneioAtual) {
-  showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: TcgTheme.card,
-    builder: (sheetContext) {
-      void ir(Widget pagina) {
-        Navigator.pop(sheetContext);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => pagina),
-        );
-      }
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: TcgTheme.card,
+      builder: (sheetContext) {
+        void ir(Widget pagina) {
+          Navigator.pop(sheetContext);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => pagina),
+          );
+        }
 
-      return SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'TOM / TDF',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
+        return SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'TOM / TDF',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Prepare e exporte o torneio para o Tournament Operations Manager.',
-                style: TextStyle(color: TcgTheme.muted, height: 1.4),
-              ),
-              const SizedBox(height: 18),
-              _AcaoTom(
-                icone: Icons.fact_check_outlined,
-                titulo: 'Verificar dados',
-                subtitulo: 'Confira se está tudo certo antes de exportar',
-                onTap: () => ir(TomPreflightPage(torneioId: torneioAtual.id)),
-              ),
-              const SizedBox(height: 10),
-              _AcaoTom(
-                icone: Icons.edit_document,
-                titulo: 'Editar metadados',
-                subtitulo: 'Informações do evento no arquivo TOM',
-                onTap: () =>
-                    ir(TomTdfMetadataPage(torneioId: torneioAtual.id)),
-              ),
-              const SizedBox(height: 10),
-              _AcaoTom(
-                icone: Icons.file_download_outlined,
-                titulo: 'Exportar torneio .tdf',
-                subtitulo: 'Gera o arquivo para o TOM',
-                destaque: true,
-                onTap: () => ir(TomTdfPage(torneioId: torneioAtual.id)),
-              ),
-            ],
+                const SizedBox(height: 4),
+                const Text(
+                  'Prepare e exporte o torneio para o Tournament Operations Manager.',
+                  style: TextStyle(color: TcgTheme.muted, height: 1.4),
+                ),
+                const SizedBox(height: 18),
+                _AcaoTom(
+                  icone: Icons.fact_check_outlined,
+                  titulo: 'Verificar dados',
+                  subtitulo: 'Confira se está tudo certo antes de exportar',
+                  onTap: () =>
+                      ir(TomPreflightPage(torneioId: torneioAtual.id)),
+                ),
+                const SizedBox(height: 10),
+                _AcaoTom(
+                  icone: Icons.edit_document,
+                  titulo: 'Editar metadados',
+                  subtitulo: 'Informações do evento no arquivo TOM',
+                  onTap: () =>
+                      ir(TomTdfMetadataPage(torneioId: torneioAtual.id)),
+                ),
+                const SizedBox(height: 10),
+                _AcaoTom(
+                  icone: Icons.file_download_outlined,
+                  titulo: 'Exportar torneio .tdf',
+                  subtitulo: 'Gera o arquivo para o TOM',
+                  destaque: true,
+                  onTap: () => ir(TomTdfPage(torneioId: torneioAtual.id)),
+                ),
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   // ============================================================
   // Estrutura da página
@@ -408,7 +448,10 @@ class GerenciarTorneioPage extends StatelessWidget {
 
                 // ===== PROGRESSO =====
                 const _TituloSecao('Progresso'),
-                _CardProgresso(torneio: torneioAtual),
+                _CardProgresso(
+                  torneio: torneioAtual,
+                  onEtapa: (e) => _abrirRodada(context, torneioAtual, e),
+                ),
 
                 const SizedBox(height: 28),
 
@@ -742,13 +785,22 @@ class _Etapa {
   final IconData? icone;
   final _EstadoEtapa estado;
 
-  const _Etapa({required this.rotulo, required this.estado, this.icone});
+  /// Número da rodada que a etapa representa (null na etapa "Final").
+  final int? rodada;
+
+  const _Etapa({
+    required this.rotulo,
+    required this.estado,
+    this.icone,
+    this.rodada,
+  });
 }
 
 class _CardProgresso extends StatelessWidget {
   final TorneioModel torneio;
+  final void Function(_Etapa etapa)? onEtapa;
 
-  const _CardProgresso({required this.torneio});
+  const _CardProgresso({required this.torneio, this.onEtapa});
 
   bool get _emAndamento => torneio.status == 'em_andamento';
   bool get _finalizado => torneio.status == 'finalizado';
@@ -769,7 +821,7 @@ class _CardProgresso extends StatelessWidget {
         estado = _EstadoEtapa.pendente;
       }
 
-      etapas.add(_Etapa(rotulo: 'R$i', estado: estado));
+      etapas.add(_Etapa(rotulo: 'R$i', estado: estado, rodada: i));
     }
 
     if (torneio.tamanhoTopCut > 0) {
@@ -782,6 +834,7 @@ class _CardProgresso extends StatelessWidget {
           rotulo: 'Top ${torneio.tamanhoTopCut}',
           icone: Icons.account_tree_rounded,
           estado: estado,
+          rodada: torneio.quantidadeRodadas + 1,
         ),
       );
     }
@@ -853,7 +906,19 @@ class _CardProgresso extends StatelessWidget {
           Wrap(
             spacing: 10,
             runSpacing: 12,
-            children: etapas.map((e) => _NoEtapa(etapa: e)).toList(),
+            children: etapas
+                .map(
+                  (e) => _NoEtapa(
+                    etapa: e,
+                    onTap: onEtapa == null ? null : () => onEtapa!(e),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Toque em uma rodada para ver os confrontos.',
+            style: TextStyle(color: TcgTheme.muted, fontSize: 12),
           ),
         ],
       ),
@@ -863,8 +928,9 @@ class _CardProgresso extends StatelessWidget {
 
 class _NoEtapa extends StatelessWidget {
   final _Etapa etapa;
+  final VoidCallback? onTap;
 
-  const _NoEtapa({required this.etapa});
+  const _NoEtapa({required this.etapa, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -895,51 +961,55 @@ class _NoEtapa extends StatelessWidget {
       );
     }
 
-    return SizedBox(
-      width: 48,
-      child: Column(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: feita ? TcgTheme.gradient : null,
-              color: feita
-                  ? null
-                  : (atual
-                      ? const Color(0x333DDC84)
-                      : const Color(0x14FFFFFF)),
-              border: Border.all(
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 48,
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: feita ? TcgTheme.gradient : null,
                 color: feita
-                    ? Colors.transparent
-                    : (atual ? TcgTheme.verde : const Color(0x26FFFFFF)),
-                width: atual ? 2 : 1,
+                    ? null
+                    : (atual
+                        ? const Color(0x333DDC84)
+                        : const Color(0x14FFFFFF)),
+                border: Border.all(
+                  color: feita
+                      ? Colors.transparent
+                      : (atual ? TcgTheme.verde : const Color(0x26FFFFFF)),
+                  width: atual ? 2 : 1,
+                ),
+                boxShadow: atual
+                    ? const [
+                        BoxShadow(
+                          color: Color(0x663DDC84),
+                          blurRadius: 14,
+                        ),
+                      ]
+                    : null,
               ),
-              boxShadow: atual
-                  ? const [
-                      BoxShadow(
-                        color: Color(0x663DDC84),
-                        blurRadius: 14,
-                      ),
-                    ]
-                  : null,
+              child: conteudo,
             ),
-            child: conteudo,
-          ),
-          const SizedBox(height: 5),
-          Text(
-            etapa.rotulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: atual ? TcgTheme.verde : TcgTheme.muted,
-              fontSize: 10,
-              fontWeight: atual ? FontWeight.w800 : FontWeight.w500,
+            const SizedBox(height: 5),
+            Text(
+              etapa.rotulo,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: atual ? TcgTheme.verde : TcgTheme.muted,
+                fontSize: 10,
+                fontWeight: atual ? FontWeight.w800 : FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
