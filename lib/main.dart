@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tcg_tournament/core/theme/tcg_theme.dart';
 
 import 'firebase_options.dart';
-import 'features/auth/pages/login_page.dart';
+import 'features/auth/pages/auth_gate.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
@@ -39,7 +39,7 @@ class TcgTournamentApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         ),
       ),
-      home: const LoginPage(),
+      home: const AuthGate(),
     );
   }
 }

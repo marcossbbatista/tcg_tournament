@@ -80,8 +80,6 @@ class _HomeJogadorPageState extends State<HomeJogadorPage> {
   Future<void> _logout() async {
     await AuthService().logout();
 
-    UsuarioSession.limpar();
-
     if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(

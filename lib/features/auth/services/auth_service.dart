@@ -86,9 +86,18 @@ class AuthService {
 
   // LOGOUT
   Future<void> logout() async {
-    await _auth.signOut();
-
-    UsuarioSession.limpar();
+    try {
+      await _googleSignInInicializado;
+      await _googleSignIn.signOut();
+    } on Exception {
+      // O Firebase deve ser encerrado mesmo que o Google não esteja disponível.
+    } finally {
+      try {
+        await _auth.signOut();
+      } finally {
+        UsuarioSession.limpar();
+      }
+    }
   }
 
   Future<void> recuperarSenha(String email) async {

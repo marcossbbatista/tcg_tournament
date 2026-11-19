@@ -129,6 +129,10 @@ Future<void> _processarLogin(
     );
   }
 
+  if (usuario.tipo != 'adm' && usuario.tipo != 'jogador') {
+    throw StateError('Tipo de acesso não reconhecido. Contate o suporte.');
+  }
+
   UsuarioSession.iniciar(usuario);
 
   if (!mounted) return;

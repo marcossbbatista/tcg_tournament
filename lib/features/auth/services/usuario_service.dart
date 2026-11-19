@@ -7,34 +7,43 @@ import '../models/usuario_model.dart';
 
 class UsuarioService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final Map<String, Future<UsuarioModel?>> _buscasPendentes = {};
 
   
   Future<UsuarioModel?> buscarUsuario(String uid) async {
-    // 1. Verifica se o usuário já está em memória.
-    final usuarioEmCache = UsuarioSession.usuario;
-
-    if (usuarioEmCache != null && usuarioEmCache.uid == uid) {
-      return usuarioEmCache;
+    final autenticado = FirebaseAuth.instance.currentUser;
+    if (autenticado == null || autenticado.uid != uid) {
+      UsuarioSession.limpar();
+      throw StateError('A autenticação não corresponde ao perfil solicitado.');
     }
 
-    // 2. Caso não esteja em memória, consulta o Firestore.
-    final documento = await _firestore
-        .collection('users')
-        .doc(uid)
-        .get();
+    final emCache = UsuarioSession.usuario;
+    if (emCache != null && emCache.uid == uid) return emCache;
+    if (emCache != null && emCache.uid != uid) UsuarioSession.limpar();
 
-    if (!documento.exists || documento.data() == null) {
-      return null;
+    final pendente = _buscasPendentes[uid];
+    if (pendente != null) return pendente;
+
+    final busca = _consultarUsuario(uid);
+    _buscasPendentes[uid] = busca;
+    try {
+      return await busca;
+    } finally {
+      if (identical(_buscasPendentes[uid], busca)) {
+        _buscasPendentes.remove(uid);
+      }
     }
+  }
 
-    // 3. Converte os dados e salva na sessão.
-    final usuario = UsuarioModel.fromMap(
-      documento.id,
-      documento.data()!,
-    );
+  Future<UsuarioModel?> _consultarUsuario(String uid) async {
+    final documento = await _firestore.collection('users').doc(uid).get();
+    if (!documento.exists || documento.data() == null) return null;
 
+    final usuario = UsuarioModel.fromMap(documento.id, documento.data()!);
+    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+      throw StateError('A conta foi alterada durante o carregamento.');
+    }
     UsuarioSession.iniciar(usuario);
-
     return usuario;
   }
 

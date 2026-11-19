@@ -64,8 +64,6 @@ class _HomeAdmPageState extends State<HomeAdmPage> {
   Future<void> _logout() async {
     await AuthService().logout();
 
-    UsuarioSession.limpar();
-
     if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(
