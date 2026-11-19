@@ -1,10 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'indice_torneios_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../torneio/models/torneio_model.dart';
 import '../../auth/models/usuario_model.dart';
 import '../models/jogador_torneio_model.dart';
 import '../models/torneio_jogador_model.dart';
-import 'package:flutter/foundation.dart';
 import '../../torneio/rules/pokemon_rulebook.dart';
 
 class JogadorTorneioService {
@@ -86,9 +87,17 @@ class JogadorTorneioService {
       ),
     );
 
-    await documento.set(
-      jogador.toMap(),
+    final batch = _firestore.batch();
+    batch.set(documento, jogador.toMap());
+    batch.set(
+      IndiceTorneiosService.referencia(_firestore, usuario.uid, torneio.id),
+      IndiceTorneiosService.dados(
+        torneioId: torneio.id,
+        torneio: torneio.toMap(),
+        jogador: jogador.toMap(),
+      ),
     );
+    await batch.commit();
 
     return 'pendente';
   }
@@ -189,11 +198,18 @@ class JogadorTorneioService {
     if (rodada.data()?['status'] != 'finalizada') {
       throw StateError('Finalize a rodada atual antes de registrar uma desistência.');
     }
-    await torneioRef.collection('players').doc(jogadorUid).update({
+    final batch = _firestore.batch();
+    batch.update(torneioRef.collection('players').doc(jogadorUid), {
       'ativo': false,
       'rodadaDesistencia': torneio.rodadaAtual,
       'desistiuEm': Timestamp.now(),
     });
+    if (!jogadorUid.startsWith('pop_')) {
+      IndiceTorneiosService.atualizarParticipacao(
+        batch, _firestore, jogadorUid, torneioId, {'ativo': false},
+      );
+    }
+    await batch.commit();
   }
 
   Stream<List<JogadorTorneioModel>>
@@ -232,14 +248,19 @@ class JogadorTorneioService {
   required String jogadorUid,
   required String status,
 }) async {
-  await _firestore
-      .collection('tournaments')
-      .doc(torneioId)
-      .collection('players')
-      .doc(jogadorUid)
-      .update({
-        'status': status,
-      });
+  final batch = _firestore.batch();
+  batch.update(
+    _firestore.collection('tournaments').doc(torneioId)
+        .collection('players').doc(jogadorUid),
+    {'status': status},
+  );
+  if (!jogadorUid.startsWith('pop_')) {
+    IndiceTorneiosService.atualizarParticipacao(
+      batch, _firestore, jogadorUid, torneioId,
+      {'torneioId': torneioId, 'statusInscricao': status},
+    );
+  }
+  await batch.commit();
 }
 
 Future<void> aprovarJogador({
@@ -265,60 +286,31 @@ Future<void> recusarJogador({
 }
 
 
-Stream<List<TorneioJogadorModel>> listarTorneiosDoJogador(
-  String uid,
-) async* {
-  await for (final snapshot in _firestore
-      .collection('tournaments')
-      .snapshots()) {
-    final List<TorneioJogadorModel> resultado = [];
-
-    for (final torneioDoc in snapshot.docs) {
-      try {
-        final jogadorDoc = await torneioDoc.reference
-            .collection('players')
-            .doc(uid)
-            .get();
-
-        if (!jogadorDoc.exists) {
-          continue;
-        }
-
-        final dadosJogador = jogadorDoc.data();
-
-        if (dadosJogador == null) {
-          continue;
-        }
-
-        final torneio = TorneioModel.fromMap(
-          torneioDoc.id,
-          torneioDoc.data(),
-        );
-
-        resultado.add(
-          TorneioJogadorModel(
-            torneio: torneio,
-            status: dadosJogador['status'] ?? 'pendente',
-            pontos: (dadosJogador['pontos'] as num?)?.toInt() ?? 0,
-            ativo: dadosJogador['ativo'] ?? true,
-          ),
-        );
-      } catch (e, stackTrace) {
-        debugPrint(
-          'Erro ao carregar participação no torneio '
-          '${torneioDoc.id}: $e',
-        );
-        debugPrint('$stackTrace');
-        rethrow;
-      }
-    }
-
-    resultado.sort(
-      (a, b) => a.torneio.dataHora.compareTo(
-        b.torneio.dataHora,
-      ),
-    );
-
+/// Escuta apenas o índice do jogador, em vez de todos os torneios.
+/// Os documentos oficiais dos torneios são obtidos somente para as inscrições
+/// encontradas. A tela pode recriar o stream ao retornar de uma edição.
+Stream<List<TorneioJogadorModel>> listarTorneiosDoJogador(String uid) async* {
+  if (FirebaseAuth.instance.currentUser?.uid != uid) {
+    throw StateError('Sessão inválida para consultar inscrições.');
+  }
+  await for (final snapshot in _firestore.collection('users').doc(uid)
+      .collection('tournaments').snapshots()) {
+    final registros = await Future.wait(snapshot.docs.map((indice) async {
+      final dados = indice.data();
+      final torneioId = dados['torneioId'] as String? ?? indice.id;
+      final torneioDoc = await _firestore.collection('tournaments')
+          .doc(torneioId).get();
+      if (!torneioDoc.exists || torneioDoc.data() == null) return null;
+      return TorneioJogadorModel(
+        torneio: TorneioModel.fromMap(torneioId, torneioDoc.data()!),
+        status: dados['statusInscricao'] as String? ?? 'pendente',
+        pontos: (dados['pontos'] as num?)?.toInt() ?? 0,
+        ativo: dados['ativo'] as bool? ?? true,
+      );
+    }));
+    if (FirebaseAuth.instance.currentUser?.uid != uid) return;
+    final resultado = registros.whereType<TorneioJogadorModel>().toList();
+    resultado.sort((a, b) => a.torneio.dataHora.compareTo(b.torneio.dataHora));
     yield resultado;
   }
 }

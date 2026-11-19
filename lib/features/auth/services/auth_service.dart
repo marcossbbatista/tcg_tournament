@@ -84,18 +84,17 @@ class AuthService {
     }
   }
 
-  // LOGOUT
+  // LOGOUT: a sessão local é invalidada antes de iniciar a operação remota.
   Future<void> logout() async {
+    UsuarioSession.limpar();
     try {
-      await _googleSignInInicializado;
-      await _googleSignIn.signOut();
-    } on Exception {
-      // O Firebase deve ser encerrado mesmo que o Google não esteja disponível.
+      await _auth.signOut();
     } finally {
       try {
-        await _auth.signOut();
-      } finally {
-        UsuarioSession.limpar();
+        await _googleSignInInicializado;
+        await _googleSignIn.signOut();
+      } on Exception {
+        // O logout Firebase continua independente da conta Google.
       }
     }
   }

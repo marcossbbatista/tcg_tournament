@@ -109,38 +109,30 @@ class UsuarioService {
     }
     if (!usuario.possuiDadosOficiais) return;
 
-    final torneios = await _firestore.collection('tournaments').get();
-    for (var indice = 0; indice < torneios.docs.length; indice += 20) {
-      final lote = torneios.docs.skip(indice).take(20).toList();
-      final inscricoes = await Future.wait(lote.map((torneio) =>
-          torneio.reference.collection('players').doc(usuario.uid).get()));
-      final atualizacoes = <Future<void>>[];
-      for (var posicao = 0; posicao < lote.length; posicao++) {
-        final inscricao = inscricoes[posicao];
-        if (!inscricao.exists) continue;
-
-        // Preserva o status, resultados, desistências e demais dados do torneio.
-        // Em torneios de temporadas antigas a divisão depende da regra vigente.
-        final temporada = (lote[posicao].data()['temporada'] as num?)?.toInt()
-            ?? PokemonRulebook.temporadaAtual;
-        String? divisao;
-        try {
-          divisao = PokemonRulebook.divisaoEtaria(
-            usuario.dataNascimento!, temporada,
-          );
-        } on StateError {
-          // Não altera a divisão original se a temporada não estiver mapeada.
-        }
-        atualizacoes.add(inscricao.reference.update({
-          'nome': usuario.nome,
-          'primeiroNome': usuario.primeiroNome,
-          'sobrenome': usuario.sobrenome,
-          'pokemonPlayerId': usuario.pokemonPlayerId,
-          'dataNascimento': Timestamp.fromDate(usuario.dataNascimento!),
-          if (divisao != null) 'divisaoEtaria': divisao,
-        }));
+    final indices = await _firestore.collection('users').doc(usuario.uid)
+        .collection('tournaments').get();
+    // Nunca varrer todos os torneios: índices antigos são migrados à parte.
+    for (final indice in indices.docs) {
+      final torneioId = indice.data()['torneioId'] as String? ?? indice.id;
+      final torneioRef = _firestore.collection('tournaments').doc(torneioId);
+      final torneioDoc = await torneioRef.get();
+      if (!torneioDoc.exists) continue;
+      final temporada = (torneioDoc.data()?['temporada'] as num?)?.toInt()
+          ?? PokemonRulebook.temporadaAtual;
+      String? divisao;
+      try {
+        divisao = PokemonRulebook.divisaoEtaria(usuario.dataNascimento!, temporada);
+      } on StateError {
+        // Temporadas não mapeadas mantêm a divisão anterior.
       }
-      await Future.wait(atualizacoes);
+      await torneioRef.collection('players').doc(usuario.uid).update({
+        'nome': usuario.nome,
+        'primeiroNome': usuario.primeiroNome,
+        'sobrenome': usuario.sobrenome,
+        'pokemonPlayerId': usuario.pokemonPlayerId,
+        'dataNascimento': Timestamp.fromDate(usuario.dataNascimento!),
+        if (divisao != null) 'divisaoEtaria': divisao,
+      });
     }
   }
 

@@ -1,3 +1,4 @@
+import '../../jogador/service/indice_torneios_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../jogador/models/jogador_torneio_model.dart';
@@ -420,6 +421,19 @@ class RodadaService {
           if (jogadoresComBye.contains(entry.key))
             'quantidadeByes': quantidadeByesAtual + 1,
         });
+        if (!entry.key.startsWith('pop_')) {
+          transaction.set(
+            IndiceTorneiosService.referencia(
+              _firestore, entry.key, torneioId,
+            ),
+            {
+              'torneioId': torneioId,
+              'pontos': pontosAtuais + entry.value,
+              'atualizadoEm': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
       }
 
       // Marcar Top Cut concluído quando restar uma final por pod.
